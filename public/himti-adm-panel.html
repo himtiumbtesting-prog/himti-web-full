@@ -321,7 +321,7 @@ async function loadDash() {
     if (!d.kegiatan_terbaru.length) { tb.innerHTML = '<tr><td colspan="5"><div class="empty"><p>Belum ada kegiatan</p></div></td></tr>'; return; }
     tb.innerHTML = d.kegiatan_terbaru.map(k =>
       '<tr><td><b>' + k.judul + '</b></td><td>' + fD(k.tanggal) + '</td><td>' + (k.lokasi || '—') + '</td>' +
-      '<td><span class="kode" onclick="showKode('' + k.kode_absen + '','' + k.judul.replace(/'/g,"\x27") + '')">' + k.kode_absen + '</span></td>' +
+      '<td><span class="kode" onclick="showKode(\'' + k.kode_absen + '\',\'' + k.judul.replace(/'/g, "\\'") + '\')">' + k.kode_absen + '</span></td>' +
       '<td>' + bSt(k.status) + '</td></tr>'
     ).join('');
   } catch(e) { console.error(e); }
@@ -342,7 +342,7 @@ async function loadAnggota() {
     '<td><b>' + a.nama + '</b><div class="td-s">' + (a.email || '') + '</div></td>' +
     '<td>' + bSt(a.status) + '</td><td>' + bPay(a.status_bayar) + '</td>' +
     '<td style="font-size:.76rem;color:var(--t2)">' + (a.tanggal_bergabung ? fD(a.tanggal_bergabung) : '—') + '</td>' +
-    '<td><button class="btn btn-glass btn-sm" onclick="editAng(' + JSON.stringify(a).replace(/</g,'&lt;') + ')">✏️ Edit</button></td></tr>'
+    '<td><button class="btn btn-glass btn-sm" onclick="editAng(' + JSON.stringify(a).replace(/</g,'&lt;').replace(/"/g,'&quot;') + ')">✏️ Edit</button></td></tr>'
   ).join('');
 }
 function resetFormAng() {
@@ -384,8 +384,8 @@ async function loadPembayaran() {
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="ei">💳</div><p>Belum ada data pembayaran</p></div></td></tr>'; return; }
   tb.innerHTML = rows.map(p => {
     const aksi = p.bukti && p.status === 'menunggu'
-      ? '<button class="btn btn-gold btn-sm" onclick="bukaBukti(' + p.id + ','' + p.nama.replace(/'/g,'') + '','' + (p.bukti || '').substring(0, 80) + '')">🖼️ Verifikasi</button>'
-      : p.bukti ? '<button class="btn btn-glass btn-sm" onclick="bukaGambar('' + (p.bukti || '').substring(0, 80) + '')">🖼️ Lihat</button>' : '—';
+      ? '<button class="btn btn-gold btn-sm" onclick="bukaBukti(' + p.id + ',\'' + p.nama.replace(/'/g, "\\'") + '\',\'' + (p.bukti || '').replace(/'/g, "\\'") + '\')">🖼️ Verifikasi</button>'
+      : p.bukti ? '<button class="btn btn-glass btn-sm" onclick="bukaGambar(\'' + (p.bukti || '').replace(/'/g, "\\'") + '\')">🖼️ Lihat</button>' : '—';
     return '<tr><td><span class="nim">' + p.npm + '</span></td><td><b>' + p.nama + '</b></td>' +
       '<td>' + (p.nama_bank ? p.nama_bank + ' · ' + p.no_rekening : '—') + '</td>' +
       '<td>Rp ' + Number(p.nominal).toLocaleString('id-ID') + '</td>' +
@@ -411,9 +411,9 @@ async function loadKegiatan() {
     '<tr><td><b>' + k.judul + '</b></td><td>' + fD(k.tanggal) + '</td>' +
     '<td style="font-size:.76rem">' + (k.waktu_mulai || '').slice(0,5) + (k.waktu_selesai ? ' – ' + (k.waktu_selesai || '').slice(0,5) : '') + '</td>' +
     '<td>' + (k.lokasi || '—') + '</td>' +
-    '<td><span class="kode" onclick="showKode('' + k.kode_absen + '','' + k.judul.replace(/'/g,'') + '')">' + k.kode_absen + '</span></td>' +
+    '<td><span class="kode" onclick="showKode(\'' + k.kode_absen + '\',\'' + k.judul.replace(/'/g, "\\'") + '\')">' + k.kode_absen + '</span></td>' +
     '<td>' + bSt(k.status) + '</td>' +
-    '<td style="white-space:nowrap"><button class="btn btn-glass btn-sm" onclick="editKeg(' + JSON.stringify(k).replace(/</g,'&lt;') + ')">✏️</button> <button class="btn btn-danger btn-sm" onclick="hapusKeg(' + k.id + ')">🗑️</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn btn-glass btn-sm" onclick="editKeg(' + JSON.stringify(k).replace(/</g,'&lt;').replace(/"/g,'&quot;') + ')">✏️</button> <button class="btn btn-danger btn-sm" onclick="hapusKeg(' + k.id + ')">🗑️</button></td></tr>'
   ).join('');
 }
 function showKode(kode, nama) {
@@ -478,7 +478,7 @@ async function loadPengumuman() {
     '<td style="font-size:.8rem;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.konten + '</td>' +
     '<td>' + (p.penting ? '<span class="badge b-warn">⭐ Penting</span>' : '—') + '</td>' +
     '<td style="font-size:.76rem;color:var(--t2)">' + fDT(p.created_at) + '</td>' +
-    '<td style="white-space:nowrap"><button class="btn btn-glass btn-sm" onclick="editPeng(' + JSON.stringify(p).replace(/</g,'&lt;') + ')">✏️</button> <button class="btn btn-danger btn-sm" onclick="hapusPeng(' + p.id + ')">🗑️</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn btn-glass btn-sm" onclick="editPeng(' + JSON.stringify(p).replace(/</g,'&lt;').replace(/"/g,'&quot;') + ')">✏️</button> <button class="btn btn-danger btn-sm" onclick="hapusPeng(' + p.id + ')">🗑️</button></td></tr>'
   ).join('');
 }
 function resetFormPeng() { ['pengId','pengJudul','pengKonten'].forEach(id => document.getElementById(id).value = ''); document.getElementById('pengPenting').checked = false; document.getElementById('mPengT').textContent = '➕ Buat Pengumuman'; }
