@@ -313,7 +313,7 @@ async function loadRekening() {
       '<div style="font-size:.72rem;color:var(--t3)">NOMINAL IURAN</div>' +
       '<div style="font-size:1.4rem;font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">Rp ' + Number(d.nominal).toLocaleString('id-ID') + '</div>' +
       '</div>' + (d.catatan ? '<div style="margin-top:8px;font-size:.78rem;color:rgba(245,197,24,.6)">📌 ' + d.catatan + '</div>' : '') + '</div>' +
-      '<button class="btn btn-glass btn-sm" style="margin-top:8px" onclick="salinNoRek('' + d.no_rekening + '')">📋 Salin Nomor Rekening</button>';
+      '<button class="btn btn-glass btn-sm" style="margin-top:8px" onclick="salinNoRek(\'' + d.no_rekening + '\')">📋 Salin Nomor Rekening</button>';
   } catch(e) { container.innerHTML = '<div class="empty"><p>Gagal memuat info rekening</p></div>'; }
 }
 
