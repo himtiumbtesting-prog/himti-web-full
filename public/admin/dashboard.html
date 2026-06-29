@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Admin - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-inner">
+      <div class="logo-circle">H</div>
+      <div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html" class="active"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran <span class="badge-count" id="cnt-iuran">0</span></a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan <span class="badge-count" id="cnt-perp">0</span></a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="page-title"><span>Dashboard</span> Admin</div>
+  </div>
+  <div class="content">
+    <div class="stats-grid" id="stats">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-number" id="s-total">-</div><div class="stat-label">Total Anggota</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-number" id="s-aktif">-</div><div class="stat-label">Anggota Aktif</div></div>
+      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-number" id="s-pending">-</div><div class="stat-label">Menunggu Aktivasi</div></div>
+      <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-number" id="s-kadaluarsa">-</div><div class="stat-label">Kadaluarsa</div></div>
+      <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-number" id="s-iuran">-</div><div class="stat-label">Iuran Pending</div></div>
+      <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-number" id="s-perp">-</div><div class="stat-label">Perpanjangan Pending</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">⚡ Aksi Cepat</span></div>
+        <div style="padding:20px;display:grid;gap:10px">
+          <a href="/admin/kelola-anggota.html" style="background:var(--navy3);border-radius:10px;padding:14px;text-decoration:none;color:var(--white);display:flex;align-items:center;gap:10px;transition:.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+            <span style="font-size:1.5rem">👥</span>
+            <div><div style="font-weight:600;font-size:.9rem">Kelola Anggota</div><div style="color:var(--gray);font-size:.78rem">Aktifkan, nonaktifkan, lihat detail</div></div>
+          </a>
+          <a href="/admin/kelola-pembayaran.html" style="background:var(--navy3);border-radius:10px;padding:14px;text-decoration:none;color:var(--white);display:flex;align-items:center;gap:10px">
+            <span style="font-size:1.5rem">💳</span>
+            <div><div style="font-weight:600;font-size:.9rem">Verifikasi Iuran</div><div style="color:var(--gray);font-size:.78rem">Setujui atau tolak bukti pembayaran</div></div>
+          </a>
+          <a href="/admin/kelola-perpanjangan.html" style="background:var(--navy3);border-radius:10px;padding:14px;text-decoration:none;color:var(--white);display:flex;align-items:center;gap:10px">
+            <span style="font-size:1.5rem">🔄</span>
+            <div><div style="font-weight:600;font-size:.9rem">Perpanjangan Masa Aktif</div><div style="color:var(--gray);font-size:.78rem">Proses permohonan perpanjangan</div></div>
+          </a>
+          <a href="/admin/kontak.html" style="background:var(--navy3);border-radius:10px;padding:14px;text-decoration:none;color:var(--white);display:flex;align-items:center;gap:10px">
+            <span style="font-size:1.5rem">📞</span>
+            <div><div style="font-weight:600;font-size:.9rem">Kontak HIMTI</div><div style="color:var(--gray);font-size:.78rem">Edit nomor WA dan info kontak</div></div>
+          </a>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">ℹ️ Info Sistem</span></div>
+        <div style="padding:20px">
+          <div id="info-kontak" style="background:var(--navy3);border-radius:10px;padding:16px;margin-bottom:12px">
+            <div style="font-size:.78rem;color:var(--gray);margin-bottom:10px">KONTAK HIMTI (terlihat anggota)</div>
+            <div style="font-size:.88rem" id="info-wa">-</div>
+            <div style="font-size:.88rem;color:var(--gray)" id="info-email">-</div>
+          </div>
+          <div style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.2);border-radius:10px;padding:14px">
+            <div style="font-size:.78rem;color:var(--gold);margin-bottom:6px">ℹ️ Masa Aktif Keanggotaan</div>
+            <div style="color:var(--gray);font-size:.83rem">Keanggotaan berlaku <strong style="color:var(--white)">2 tahun</strong> sejak aktivasi. Anggota dapat mengajukan perpanjangan sebelum atau sesudah kadaluarsa.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/admin/stats', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (!r.ok) { logout(); return; }
+    document.getElementById('s-total').textContent = d.total;
+    document.getElementById('s-aktif').textContent = d.aktif;
+    document.getElementById('s-pending').textContent = d.pending;
+    document.getElementById('s-kadaluarsa').textContent = d.kadaluarsa;
+    document.getElementById('s-iuran').textContent = d.iuran_pending;
+    document.getElementById('s-perp').textContent = d.perpanjangan_pending;
+    document.getElementById('cnt-iuran').textContent = d.iuran_pending;
+    document.getElementById('cnt-perp').textContent = d.perpanjangan_pending;
+    if (!d.iuran_pending) document.getElementById('cnt-iuran').style.display = 'none';
+    if (!d.perpanjangan_pending) document.getElementById('cnt-perp').style.display = 'none';
+  } catch (e) {}
+}
+
+async function loadKontak() {
+  try {
+    const k = await fetch('/api/kontak').then(r => r.json());
+    document.getElementById('info-wa').textContent = '📱 ' + (k.nomor_wa || 'Belum diatur');
+    document.getElementById('info-email').textContent = '📧 ' + (k.email_himti || 'Belum diatur');
+  } catch (e) {}
+}
+loadStats(); loadKontak();
+</script>
+</body>
+</html>

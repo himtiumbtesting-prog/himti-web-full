@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Iuran - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html" class="active"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Kelola <span>Iuran</span> Anggota</div></div>
+  <div class="content">
+
+    <!-- FILTER -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header"><span class="table-title">🔍 Filter</span></div>
+      <div style="padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="f-status" onchange="loadData()" style="width:150px">
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Disetujui</option>
+            <option value="rejected">Ditolak</option>
+            <option value="">Semua</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" onclick="loadData()">Filter</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">💳 Daftar Pengajuan Iuran</span>
+        <span id="jumlah-label" style="color:var(--gray);font-size:.82rem"></span>
+      </div>
+      <div id="tbl-loading"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table id="tbl" style="display:none">
+          <thead>
+            <tr><th>Anggota</th><th>Jenis</th><th>Nominal</th><th>Tanggal Kirim</th><th>Status</th><th>Catatan</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty" id="tbl-empty" style="display:none">Tidak ada data iuran.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROSES -->
+<div class="modal-overlay" id="modal-proses">
+  <div class="modal">
+    <h3>💳 Proses Pengajuan Iuran</h3>
+    <div id="modal-info" style="background:var(--navy3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:.88rem"></div>
+    <div id="bukti-wrap" style="margin-bottom:14px"></div>
+    <div class="form-group">
+      <label class="form-label">Catatan Admin (opsional)</label>
+      <textarea id="catatan-admin" rows="2" style="width:100%" placeholder="Alasan penolakan atau keterangan..."></textarea>
+    </div>
+    <div class="alert alert-success" id="modal-ok"></div>
+    <div class="alert alert-danger" id="modal-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-success btn-sm" id="btn-setujui" onclick="proses('approve')">✅ Setujui & Aktifkan</button>
+      <button class="btn btn-danger btn-sm" id="btn-tolak" onclick="proses('reject')">❌ Tolak</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+function fmtDT(d) { return d ? new Date(d).toLocaleString('id-ID') : '-'; }
+function fmtRp(n) { return 'Rp ' + (n||0).toLocaleString('id-ID'); }
+
+let allData = []; let selectedId = null;
+
+function statusBadge(s) {
+  const m = { pending:['badge-pending','⏳ Pending'], approved:['badge-approved','✅ Disetujui'], rejected:['badge-rejected','❌ Ditolak'] };
+  const [c,l] = m[s]||['badge-nonaktif',s];
+  return `<span class="badge ${c}">${l}</span>`;
+}
+
+async function loadData() {
+  document.getElementById('tbl-loading').style.display = 'block';
+  document.getElementById('tbl').style.display = 'none';
+  document.getElementById('tbl-empty').style.display = 'none';
+  const filterStatus = document.getElementById('f-status').value;
+  try {
+    const res = await fetch('/api/admin/pembayaran', { headers:{ Authorization:'Bearer '+token } });
+    let data = await res.json();
+    if (filterStatus) data = data.filter(d => d.status === filterStatus);
+    allData = data;
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('jumlah-label').textContent = data.length + ' pengajuan';
+    if (!data.length) { document.getElementById('tbl-empty').style.display='block'; return; }
+    const rows = data.map(d => `
+      <tr>
+        <td><div style="font-weight:600">${d.nama}</div><div style="color:var(--gold);font-size:.75rem;font-family:monospace">${d.npm}</div></td>
+        <td><span style="font-size:.82rem">${d.jenis==='iuran_awal'?'💳 Iuran Awal':'🔄 Perpanjangan'}</span></td>
+        <td style="font-size:.85rem">${fmtRp(d.jumlah)}</td>
+        <td style="font-size:.78rem;color:var(--gray)">${fmtDT(d.submitted_at)}</td>
+        <td>${statusBadge(d.status)}</td>
+        <td style="font-size:.8rem;color:var(--gray);max-width:150px;word-break:break-word">${d.catatan_anggota||'-'}</td>
+        <td>
+          ${d.bukti_url ? `<button class="btn btn-outline btn-sm" onclick="lihatBukti(${d.id})" style="margin-bottom:4px">📷 Bukti</button><br>` : ''}
+          ${d.status==='pending' ? `<button class="btn btn-gold btn-sm" onclick="openProses(${d.id})">Proses</button>` : `<span style="color:var(--gray);font-size:.75rem">Sudah diproses</span>`}
+        </td>
+      </tr>`).join('');
+    document.getElementById('tbl-body').innerHTML = rows;
+    document.getElementById('tbl').style.display = 'table';
+  } catch(e) {
+    document.getElementById('tbl-loading').style.display='none';
+    document.getElementById('tbl-empty').style.display='block';
+    document.getElementById('tbl-empty').textContent='Gagal memuat data.';
+  }
+}
+
+function openProses(id) {
+  const d = allData.find(x => x.id === id);
+  if (!d) return;
+  selectedId = id;
+  document.getElementById('modal-info').innerHTML = `
+    <div><strong>${d.nama}</strong> (${d.npm})</div>
+    <div style="color:var(--gray);margin-top:6px">Jenis: ${d.jenis==='iuran_awal'?'Iuran Awal':'Perpanjangan'} • ${fmtRp(d.jumlah)}</div>
+    <div style="color:var(--gold);font-size:.82rem;margin-top:4px">
+      ${d.jenis==='iuran_awal'?'⚡ Menyetujui iuran awal akan otomatis mengaktifkan akun anggota (masa aktif 2 tahun)':''}
+    </div>
+    ${d.catatan_anggota?`<div style="margin-top:8px;font-style:italic;color:var(--gray)">Catatan: "${d.catatan_anggota}"</div>`:''}`;
+  document.getElementById('bukti-wrap').innerHTML = d.bukti_url
+    ? `<div style="margin-bottom:6px;color:var(--gray);font-size:.8rem">Bukti Pembayaran:</div><img src="${d.bukti_url}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--navy3);cursor:pointer" onclick="window.open(this.src,'_blank')" alt="bukti">`
+    : '<p style="color:var(--gray);font-size:.82rem">Tidak ada bukti dilampirkan.</p>';
+  document.getElementById('catatan-admin').value = '';
+  document.getElementById('modal-ok').style.display = 'none';
+  document.getElementById('modal-err').style.display = 'none';
+  document.getElementById('btn-setujui').disabled = false;
+  document.getElementById('btn-tolak').disabled = false;
+  document.getElementById('modal-proses').classList.add('show');
+}
+
+function lihatBukti(id) {
+  const d = allData.find(x => x.id===id);
+  if (d?.bukti_url) { const w=window.open('','_blank'); w.document.write(`<img src="${d.bukti_url}" style="max-width:100%">`); }
+}
+
+function closeModal() { document.getElementById('modal-proses').classList.remove('show'); selectedId=null; }
+
+async function proses(action) {
+  if (!selectedId) return;
+  const ok=document.getElementById('modal-ok'); const err=document.getElementById('modal-err');
+  ok.style.display=err.style.display='none';
+  document.getElementById('btn-setujui').disabled=true;
+  document.getElementById('btn-tolak').disabled=true;
+  try {
+    const res = await fetch(`/api/admin/pembayaran/${selectedId}/proses`, {
+      method:'PUT',
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({action, catatan:document.getElementById('catatan-admin').value})
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent=d.error; err.style.display='block'; }
+    else {
+      ok.textContent = action==='approve' ? '✅ Iuran disetujui! Akun anggota telah diaktifkan.' : '✅ Iuran ditolak.';
+      ok.style.display='block';
+      setTimeout(() => { closeModal(); loadData(); }, 1600);
+    }
+  } catch(e) { err.textContent='Gagal memproses.'; err.style.display='block'; }
+  finally { document.getElementById('btn-setujui').disabled=false; document.getElementById('btn-tolak').disabled=false; }
+}
+
+loadData();
+document.getElementById('modal-proses').addEventListener('click', e=>{ if(e.target===e.currentTarget)closeModal(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayar Iuran - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545;--warn:#ffc107}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
+.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:var(--gray);font-size:.85rem} .nav-user span{color:var(--white);font-weight:600}
+.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:.2s}
+.btn-logout:hover{background:var(--danger);color:var(--white)}
+.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
+.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
+.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
+.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.main{max-width:800px;margin:0 auto;padding:28px 20px}
+.page-title{font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+.page-sub{color:var(--gray);font-size:.88rem;margin-bottom:24px}
+.card{background:var(--navy2);border-radius:14px;padding:26px;margin-bottom:20px;border:1px solid var(--navy3)}
+.card h3{color:var(--gold);font-size:1rem;margin-bottom:16px}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.9rem}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--gray)} .info-value{font-weight:600}
+.badge{padding:4px 12px;border-radius:12px;font-size:.78rem;font-weight:700}
+.badge-gold{background:var(--gold);color:var(--navy)}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:.82rem;color:var(--gray);margin-bottom:5px}
+input,textarea{width:100%;padding:10px 14px;background:var(--navy3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font-size:.9rem;outline:none;transition:.2s}
+input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
+input[type=file]{cursor:pointer;padding:8px}
+.btn{padding:10px 22px;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;transition:.2s}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-gold:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:11px 14px;border-radius:8px;margin-top:12px;font-size:.88rem;display:none}
+.alert-success{background:rgba(40,167,69,.15);border:1px solid var(--success);color:#5dd87a}
+.alert-danger{background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
+.status-item{background:var(--navy3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,.05)}
+.status-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.status-date{color:var(--gray);font-size:.78rem}
+.badge-pending{background:rgba(255,193,7,.15);color:var(--warn)}
+.badge-approved{background:rgba(40,167,69,.2);color:#5dd87a}
+.badge-rejected{background:rgba(220,53,69,.15);color:#f87184}
+.spinner{width:26px;height:26px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<nav class="topnav">
+  <div class="nav-left">
+    <div class="logo-circle">H</div>
+    <span class="nav-brand">HIMTI UMB</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+    <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
+  </div>
+</nav>
+<div class="navmenu">
+  <a href="/anggota/dashboard.html">🏠 Beranda</a>
+  <a href="/anggota/profil.html">👤 Profil</a>
+  <a href="/anggota/cari-anggota.html">🔍 Cari Anggota</a>
+  <a href="/anggota/bayar-iuran.html" class="active">💳 Bayar Iuran</a>
+  <a href="/anggota/perpanjangan.html">🔄 Perpanjang</a>
+  <a href="/anggota/kartu-anggota.html">🪪 Kartu Anggota</a>
+  <a href="/anggota/presensi.html">📅 Presensi</a>
+</div>
+<div class="main">
+  <div class="page-title">💳 Bayar Iuran</div>
+  <p class="page-sub">Upload bukti pembayaran iuran keanggotaan HIMTI UMB</p>
+
+  <!-- INFO PEMBAYARAN -->
+  <div class="card">
+    <h3>📋 Info Rekening Pembayaran</h3>
+    <div class="info-row"><span class="info-label">Bank</span><span class="info-value" id="p-bank">-</span></div>
+    <div class="info-row"><span class="info-label">No. Rekening</span><span class="info-value" id="p-norek">-</span></div>
+    <div class="info-row"><span class="info-label">Atas Nama</span><span class="info-value" id="p-atasnama">-</span></div>
+    <div class="info-row"><span class="info-label">Nominal</span><span class="info-value"><span class="badge badge-gold" id="p-nominal">-</span></span></div>
+    <div style="margin-top:14px;color:var(--gray);font-size:.85rem;font-style:italic" id="p-instruksi"></div>
+  </div>
+
+  <!-- FORM UPLOAD -->
+  <div class="card" id="form-upload">
+    <h3>📤 Upload Bukti Pembayaran</h3>
+    <div class="form-group">
+      <label>Foto Bukti Transfer <span style="color:var(--gold)">*</span></label>
+      <input type="file" id="bukti" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label>Catatan (opsional)</label>
+      <input type="text" id="catatan" placeholder="Misal: transfer via BRI mobile">
+    </div>
+    <div class="alert alert-success" id="ok"></div>
+    <div class="alert alert-danger" id="err"></div>
+    <button class="btn btn-gold" id="btn-kirim" onclick="kirim()">📤 Kirim Bukti Pembayaran</button>
+  </div>
+
+  <!-- RIWAYAT -->
+  <div class="card">
+    <h3>📜 Riwayat Pembayaran</h3>
+    <div id="riwayat-loading"><div class="spinner"></div></div>
+    <div id="riwayat-list"></div>
+  </div>
+</div>
+<script>
+const token=localStorage.getItem('himti_token');
+if(!token||localStorage.getItem('himti_role')!=='anggota')window.location.href='/anggota/login.html';
+document.getElementById('nav-nama').textContent=localStorage.getItem('himti_nama')||'-';
+function logout(){ himtiLogout(); }
+function fmtDate(d){if(!d)return'-';return new Date(d).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+
+async function loadInfo(){
+  try{
+    const infoByr=await fetch('/api/info-pembayaran').then(r=>r.json());
+    document.getElementById('p-bank').textContent=infoByr.nama_bank||'-';
+    document.getElementById('p-norek').textContent=infoByr.nomor_rekening||'-';
+    document.getElementById('p-atasnama').textContent=infoByr.atas_nama||'-';
+    document.getElementById('p-nominal').textContent='Rp '+(infoByr.nominal_iuran||50000).toLocaleString('id-ID');
+    document.getElementById('p-instruksi').textContent=infoByr.instruksi||'';
+  }catch(e){}
+}
+
+async function loadRiwayat(){
+  try{
+    const res=await fetch('/api/pembayaran/status',{headers:{Authorization:'Bearer '+token}});
+    const data=await res.json();
+    document.getElementById('riwayat-loading').style.display='none';
+    if(!Array.isArray(data)||!data.length){
+      document.getElementById('riwayat-list').innerHTML='<p style="color:var(--gray);font-size:.85rem">Belum ada riwayat pembayaran.</p>';
+      return;
+    }
+    const hasPending=data.some(d=>d.status==='pending');
+    if(hasPending){
+      document.getElementById('form-upload').innerHTML='<div style="padding:14px;background:rgba(255,193,7,.1);border:1px solid #ffc107;border-radius:8px;color:#ffc107;font-size:.88rem">⏳ Pembayaran sedang diproses oleh admin. Tunggu konfirmasi.</div>';
+    }
+    const html=data.map(d=>{
+      const sc=d.status==='pending'?'badge-pending':d.status==='approved'?'badge-approved':'badge-rejected';
+      const sl=d.status==='pending'?'⏳ Menunggu':d.status==='approved'?'✅ Disetujui':'❌ Ditolak';
+      return `<div class="status-item">
+        <div class="status-head">
+          <span style="font-size:.85rem;font-weight:600">${d.jenis==='iuran_awal'?'Iuran Awal':'Perpanjangan'}</span>
+          <span class="badge ${sc}">${sl}</span>
+        </div>
+        <div class="status-date">${fmtDate(d.submitted_at)}</div>
+        ${d.catatan_admin?`<div style="margin-top:6px;color:var(--gray);font-size:.8rem">Catatan: <em>${d.catatan_admin}</em></div>`:''}
+      </div>`;
+    }).join('');
+    document.getElementById('riwayat-list').innerHTML=html;
+  }catch(e){document.getElementById('riwayat-loading').style.display='none';}
+}
+
+async function kirim(){
+  const ok=document.getElementById('ok');
+  const err=document.getElementById('err');
+  ok.style.display=err.style.display='none';
+  const bukti=document.getElementById('bukti').files[0];
+  if(!bukti){err.textContent='Bukti pembayaran wajib dipilih!';err.style.display='block';return;}
+  const btn=document.getElementById('btn-kirim');
+  btn.disabled=true;btn.textContent='Mengirim...';
+  const fd=new FormData();
+  fd.append('bukti',bukti);
+  fd.append('catatan',document.getElementById('catatan').value);
+  try{
+    const res=await fetch('/api/pembayaran/submit',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error;err.style.display='block';}
+    else{ok.textContent='✅ '+data.message;ok.style.display='block';document.getElementById('bukti').value='';loadRiwayat();}
+  }catch(e){err.textContent='Gagal mengirim.';err.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='📤 Kirim Bukti Pembayaran';}
+}
+loadInfo();loadRiwayat();
+</script>
+</body>
+</html>

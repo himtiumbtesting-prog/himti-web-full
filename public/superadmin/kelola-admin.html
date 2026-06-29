@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Admin - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner">
+    <div class="logo-circle" style="background:linear-gradient(135deg,var(--gold),var(--gold2))">SA</div>
+    <div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Super Admin</div></div>
+  </div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Super Admin</div>
+    <a href="/superadmin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/superadmin/kelola-admin.html" class="active"><span class="icon">👤</span> Kelola Admin</a>
+    <div class="nav-section">Admin Area</div>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong>Super Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="page-title">Kelola <span>Admin</span></div>
+    <button class="btn btn-gold btn-sm" onclick="openTambah()">➕ Tambah Admin Baru</button>
+  </div>
+  <div class="content">
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">👤 Daftar Admin HIMTI</span>
+        <button class="btn btn-outline btn-sm" onclick="loadAdmins()">↺ Refresh</button>
+      </div>
+      <div id="tbl-loading"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table id="tbl" style="display:none">
+          <thead><tr><th>No</th><th>Username</th><th>Nama</th><th>Email</th><th>Jabatan</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty" id="tbl-empty" style="display:none">Belum ada admin terdaftar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH ADMIN -->
+<div class="modal-overlay" id="modal-tambah">
+  <div class="modal">
+    <h3>➕ Tambah Admin Baru</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Username <span style="color:var(--gold)">*</span></label>
+        <input type="text" id="t-username" style="width:100%" placeholder="username login">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span style="color:var(--gold)">*</span></label>
+        <input type="password" id="t-password" style="width:100%" placeholder="min. 6 karakter">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap <span style="color:var(--gold)">*</span></label>
+        <input type="text" id="t-nama" style="width:100%" placeholder="nama admin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="t-email" style="width:100%" placeholder="email admin">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Jabatan</label>
+      <input type="text" id="t-jabatan" style="width:100%" placeholder="contoh: Bendahara, Sekretaris...">
+    </div>
+    <div class="alert alert-success" id="t-ok"></div>
+    <div class="alert alert-danger" id="t-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gold btn-sm" onclick="tambahAdmin()">✅ Tambah Admin</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-tambah')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KONFIRMASI HAPUS -->
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal" style="max-width:400px">
+    <h3>⚠️ Konfirmasi Hapus</h3>
+    <p style="color:var(--gray);margin-bottom:16px;font-size:.9rem">Apakah kamu yakin ingin menghapus admin <strong id="hapus-nama" style="color:var(--white)"></strong>? Tindakan ini tidak bisa dibatalkan.</p>
+    <div class="alert alert-danger" id="h-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="hapusAdmin()">🗑️ Hapus</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-hapus')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || role !== 'superadmin') window.location.href = '/superadmin/login.html';
+
+function logout(){ himtiLogout(); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '-'; }
+
+let selectedHapusId = null;
+let allAdmins = [];
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function loadAdmins() {
+  document.getElementById('tbl-loading').style.display = 'block';
+  document.getElementById('tbl').style.display = 'none';
+  document.getElementById('tbl-empty').style.display = 'none';
+  try {
+    const res = await fetch('/api/superadmin/admins', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    allAdmins = data;
+    document.getElementById('tbl-loading').style.display = 'none';
+    if (!data.length) { document.getElementById('tbl-empty').style.display = 'block'; return; }
+    const rows = data.map((a, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><code style="color:var(--gold)">${a.username}</code></td>
+        <td style="font-weight:600">${a.nama || '-'}</td>
+        <td style="font-size:.82rem;color:var(--gray)">${a.email || '-'}</td>
+        <td style="font-size:.82rem">${a.jabatan || '-'}</td>
+        <td>${a.is_active
+          ? '<span class="badge badge-aktif">✅ Aktif</span>'
+          : '<span class="badge badge-nonaktif">⛔ Nonaktif</span>'}</td>
+        <td style="font-size:.78rem;color:var(--gray)">${fmtDate(a.created_at)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn ${a.is_active?'btn-danger':'btn-success'} btn-sm" onclick="toggleAdmin(${a.id},${a.is_active})" style="margin-right:4px">
+            ${a.is_active ? '⛔ Non' : '✅ Aktif'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="konfirmasiHapus(${a.id},'${a.nama||a.username}')">🗑️</button>
+        </td>
+      </tr>`).join('');
+    document.getElementById('tbl-body').innerHTML = rows;
+    document.getElementById('tbl').style.display = 'table';
+  } catch (e) {
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('tbl-empty').style.display = 'block';
+    document.getElementById('tbl-empty').textContent = 'Gagal memuat data.';
+  }
+}
+
+function openTambah() {
+  ['t-username','t-password','t-nama','t-email','t-jabatan'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('t-ok').style.display = 'none';
+  document.getElementById('t-err').style.display = 'none';
+  document.getElementById('modal-tambah').classList.add('show');
+}
+
+async function tambahAdmin() {
+  const ok = document.getElementById('t-ok'); const err = document.getElementById('t-err');
+  ok.style.display = err.style.display = 'none';
+  const username = document.getElementById('t-username').value.trim();
+  const password = document.getElementById('t-password').value;
+  const nama = document.getElementById('t-nama').value.trim();
+  if (!username || !password || !nama) { err.textContent='Username, password, dan nama wajib diisi!'; err.style.display='block'; return; }
+  if (password.length < 6) { err.textContent='Password minimal 6 karakter!'; err.style.display='block'; return; }
+  try {
+    const res = await fetch('/api/superadmin/admins', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username, password, nama,
+        email: document.getElementById('t-email').value,
+        jabatan: document.getElementById('t-jabatan').value
+      })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Admin berhasil ditambahkan!'; ok.style.display = 'block'; setTimeout(() => { closeModal('modal-tambah'); loadAdmins(); }, 1400); }
+  } catch (e) { err.textContent = 'Gagal menambahkan admin.'; err.style.display = 'block'; }
+}
+
+async function toggleAdmin(id, isActive) {
+  const action = isActive ? 'nonaktifkan' : 'aktifkan';
+  if (!confirm(`Yakin ingin ${action} admin ini?`)) return;
+  try {
+    const res = await fetch(`/api/superadmin/admins/${id}/toggle`, { method:'PUT', headers:{ Authorization:'Bearer '+token } });
+    if (res.ok) loadAdmins();
+    else alert('Gagal mengubah status admin.');
+  } catch (e) { alert('Gagal.'); }
+}
+
+function konfirmasiHapus(id, nama) {
+  selectedHapusId = id;
+  document.getElementById('hapus-nama').textContent = nama;
+  document.getElementById('h-err').style.display = 'none';
+  document.getElementById('modal-hapus').classList.add('show');
+}
+
+async function hapusAdmin() {
+  if (!selectedHapusId) return;
+  try {
+    const res = await fetch(`/api/superadmin/admins/${selectedHapusId}`, { method:'DELETE', headers:{ Authorization:'Bearer '+token } });
+    if (res.ok) { closeModal('modal-hapus'); loadAdmins(); }
+    else { const d=await res.json(); document.getElementById('h-err').textContent=d.error; document.getElementById('h-err').style.display='block'; }
+  } catch (e) { document.getElementById('h-err').textContent='Gagal menghapus.'; document.getElementById('h-err').style.display='block'; }
+}
+
+loadAdmins();
+['modal-tambah','modal-hapus'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(id); });
+});
+</script>
+</body>
+</html>

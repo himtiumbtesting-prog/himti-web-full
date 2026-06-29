@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Super Admin - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+<style>
+.sa-badge{background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);border-radius:6px;padding:3px 10px;font-size:.72rem;color:var(--gold);font-weight:700;margin-left:8px}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-inner">
+      <div class="logo-circle" style="background:linear-gradient(135deg,var(--gold),var(--gold2))">SA</div>
+      <div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Super Admin</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Super Admin</div>
+    <a href="/superadmin/dashboard.html" class="active"><span class="icon">📊</span> Dashboard</a>
+    <a href="/superadmin/kelola-admin.html"><span class="icon">👤</span> Kelola Admin</a>
+    <div class="nav-section">Admin Area</div>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong>Super Admin <span class="sa-badge">SA</span></strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="page-title"><span>Dashboard</span> Super Admin</div>
+    <span class="sa-badge">⚡ Level Tertinggi</span>
+  </div>
+  <div class="content">
+
+    <!-- STATS -->
+    <div style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.3);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-weight:700;color:var(--gold)">📊 Akses Data Anggota</div>
+        <div style="color:var(--gray);font-size:.85rem;margin-top:3px">Super Admin bisa melihat, filter, dan download Excel data anggota</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <a href="/admin/kelola-anggota.html" class="btn btn-gold">👥 Lihat & Download Data</a>
+        <a href="/admin/kelola-perpanjangan.html" class="btn btn-outline">🔄 Kelola Perpanjangan</a>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-number" id="s-total">-</div><div class="stat-label">Total Anggota</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-number" id="s-aktif">-</div><div class="stat-label">Anggota Aktif</div></div>
+      <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-number" id="s-admins">-</div><div class="stat-label">Jumlah Admin</div></div>
+    </div>
+
+    <!-- INFO & CREDENTIALS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">🔑 Kredensial Default</span></div>
+        <div style="padding:20px">
+          <div style="background:var(--navy3);border-radius:10px;padding:16px;margin-bottom:12px">
+            <div style="font-size:.72rem;color:var(--gray);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Super Admin</div>
+            <div style="font-size:.88rem">Username: <code style="color:var(--gold)">superadmin</code></div>
+            <div style="font-size:.88rem;margin-top:4px">Password: <code style="color:var(--gold)">himti2025</code></div>
+          </div>
+          <div style="background:var(--navy3);border-radius:10px;padding:16px">
+            <div style="font-size:.72rem;color:var(--gray);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Admin Default</div>
+            <div style="font-size:.88rem">Username: <code style="color:var(--gold)">admin</code></div>
+            <div style="font-size:.88rem;margin-top:4px">Password: <code style="color:var(--gold)">admin2025</code></div>
+          </div>
+          <div style="margin-top:12px;padding:10px;background:rgba(220,53,69,.1);border-radius:8px;font-size:.78rem;color:#f87184">
+            ⚠️ Segera ganti password default setelah deploy!
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">🔐 Ganti Password SA</span></div>
+        <div style="padding:20px">
+          <div class="form-group">
+            <label class="form-label">Password Lama</label>
+            <input type="password" id="pw-lama" style="width:100%" placeholder="password saat ini">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password Baru</label>
+            <input type="password" id="pw-baru" style="width:100%" placeholder="password baru (min. 8 karakter)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konfirmasi Password Baru</label>
+            <input type="password" id="pw-konfirm" style="width:100%" placeholder="ulangi password baru">
+          </div>
+          <div class="alert alert-success" id="pw-ok"></div>
+          <div class="alert alert-danger" id="pw-err"></div>
+          <button class="btn btn-gold" style="width:100%" onclick="gantiPassword()">🔐 Ganti Password</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INISIASI DB -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-header"><span class="table-title">🗄️ Manajemen Database</span></div>
+      <div style="padding:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div>
+          <p style="color:var(--gray);font-size:.85rem;margin-bottom:10px">Inisialisasi ulang database jika ada tabel yang hilang atau update skema. Tidak akan menghapus data yang ada.</p>
+          <button class="btn btn-outline" onclick="initDB()">🔄 Re-inisialisasi DB</button>
+        </div>
+        <div id="db-result" style="font-size:.85rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || role !== 'superadmin') window.location.href = '/superadmin/login.html';
+
+function logout(){ himtiLogout(); }
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/superadmin/stats', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (!r.ok) { logout(); return; }
+    document.getElementById('s-total').textContent = d.total;
+    document.getElementById('s-aktif').textContent = d.aktif;
+    document.getElementById('s-admins').textContent = d.admins;
+  } catch (e) {}
+}
+
+async function gantiPassword() {
+  const ok = document.getElementById('pw-ok'); const err = document.getElementById('pw-err');
+  ok.style.display = err.style.display = 'none';
+  const lama = document.getElementById('pw-lama').value;
+  const baru = document.getElementById('pw-baru').value;
+  const konfirm = document.getElementById('pw-konfirm').value;
+  if (!lama || !baru) { err.textContent = 'Semua field wajib diisi!'; err.style.display = 'block'; return; }
+  if (baru.length < 8) { err.textContent = 'Password baru minimal 8 karakter!'; err.style.display = 'block'; return; }
+  if (baru !== konfirm) { err.textContent = 'Konfirmasi password tidak cocok!'; err.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/superadmin/ganti-password', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password_lama: lama, password_baru: baru })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Password berhasil diubah!'; ok.style.display = 'block'; document.getElementById('pw-lama').value = document.getElementById('pw-baru').value = document.getElementById('pw-konfirm').value = ''; }
+  } catch (e) { err.textContent = 'Gagal mengubah password.'; err.style.display = 'block'; }
+}
+
+async function initDB() {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Memproses...';
+  try {
+    const res = await fetch('/api/setup?key=HIMTI2025SETUP');
+    const d = await res.json();
+    document.getElementById('db-result').innerHTML = `<span style="color:${res.ok?'#5dd87a':'#f87184'}">${res.ok?'✅ '+d.message:'❌ '+d.error}</span>`;
+  } catch (e) { document.getElementById('db-result').innerHTML = '<span style="color:#f87184">❌ Gagal terhubung</span>'; }
+  finally { btn.disabled = false; btn.textContent = '🔄 Re-inisialisasi DB'; }
+}
+
+loadStats();
+</script>
+</body>
+</html>

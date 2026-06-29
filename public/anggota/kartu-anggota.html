@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kartu Anggota - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
+.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:var(--gray);font-size:.85rem}
+.nav-user span{color:var(--white);font-weight:600}
+.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:.2s}
+.btn-logout:hover{background:var(--danger);color:var(--white)}
+.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
+.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
+.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
+.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.main{max-width:700px;margin:0 auto;padding:28px 20px}
+.page-title{font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+.page-sub{color:var(--gray);font-size:.88rem;margin-bottom:28px}
+
+/* KARTU ANGGOTA */
+#kartu-wrapper{margin:0 auto;max-width:440px}
+.kartu{background:linear-gradient(135deg,#0d1f3c 0%,#1a2f4e 60%,#0a1628 100%);border:2px solid var(--gold);border-radius:18px;padding:28px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5);aspect-ratio:1.6/1}
+.kartu::before{content:'HIMTI';position:absolute;right:-20px;bottom:-20px;font-size:8rem;font-weight:900;color:rgba(201,162,39,.06);pointer-events:none;line-height:1}
+.kartu::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold))}
+.kartu-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.kartu-org{font-size:.65rem;color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:.08em;line-height:1.5}
+.kartu-logo{width:40px;height:40px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--navy);flex-shrink:0}
+.kartu-body{display:flex;gap:16px;align-items:flex-start}
+.kartu-foto{width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid var(--gold);background:rgba(255,255,255,.05);flex-shrink:0}
+.kartu-foto-ph{width:72px;height:72px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
+.kartu-info{flex:1}
+.kartu-nama{font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:4px;line-height:1.2}
+.kartu-npm{color:var(--gold);font-size:.78rem;font-family:monospace;font-weight:600;margin-bottom:4px}
+.kartu-prodi{color:var(--gray);font-size:.72rem;margin-bottom:8px}
+.kartu-status-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.kartu-badge{padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:700}
+.badge-aktif{background:rgba(40,167,69,.25);color:#5dd87a;border:1px solid var(--success)}
+.badge-kadaluarsa{background:rgba(220,53,69,.2);color:#f87184;border:1px solid var(--danger)}
+.badge-pending{background:rgba(255,193,7,.15);color:#ffc107;border:1px solid #ffc107}
+.kartu-footer{margin-top:18px;display:flex;justify-content:space-between;align-items:flex-end}
+.masa-aktif-box{background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);border-radius:8px;padding:8px 14px}
+.masa-aktif-label{font-size:.62rem;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.masa-aktif-val{font-size:.82rem;font-weight:700;color:var(--gold)}
+.kartu-tahun{font-size:.65rem;color:var(--gray);text-align:right}
+
+.btn-wrap{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.btn{padding:10px 24px;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;transition:.2s}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-outline{background:transparent;border:1px solid var(--navy3);color:var(--gray)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+
+.alert-warn{background:rgba(220,53,69,.1);border:1px solid var(--danger);border-radius:10px;padding:16px;color:#f87184;margin-top:20px;text-align:center;display:none}
+.spinner{width:30px;height:30px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Print styles */
+@media print {
+  .topnav,.navmenu,.page-title,.page-sub,.btn-wrap{display:none!important}
+  body{background:white}
+  .kartu{page-break-inside:avoid;box-shadow:none}
+  #kartu-wrapper{max-width:100%}
+}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<nav class="topnav">
+  <div class="nav-left">
+    <div class="logo-circle">H</div>
+    <span class="nav-brand">HIMTI UMB</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+    <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
+  </div>
+</nav>
+<div class="navmenu">
+  <a href="/anggota/dashboard.html">🏠 Beranda</a>
+  <a href="/anggota/profil.html">👤 Profil</a>
+  <a href="/anggota/cari-anggota.html">🔍 Cari Anggota</a>
+  <a href="/anggota/bayar-iuran.html">💳 Bayar Iuran</a>
+  <a href="/anggota/perpanjangan.html">🔄 Perpanjang</a>
+  <a href="/anggota/kartu-anggota.html" class="active">🪪 Kartu Anggota</a>
+  <a href="/anggota/presensi.html">📅 Presensi</a>
+</div>
+<div class="main">
+  <div class="page-title">🪪 Kartu Anggota Digital</div>
+  <p class="page-sub">Kartu keanggotaan resmi HIMTI UMB dengan masa aktif 2 tahun</p>
+
+  <div id="loading"><div class="spinner"></div></div>
+
+  <div id="kartu-wrapper" style="display:none">
+    <div class="kartu" id="kartu">
+      <div class="kartu-header">
+        <div class="kartu-org">
+          Himpunan Mahasiswa<br>Teknik Informatika<br><strong>Universitas Muhammadiyah Bengkulu</strong>
+        </div>
+        <div class="kartu-logo">H</div>
+      </div>
+      <div class="kartu-body">
+        <div id="foto-wrap"><div class="kartu-foto-ph">👤</div></div>
+        <div class="kartu-info">
+          <div class="kartu-nama" id="k-nama">-</div>
+          <div class="kartu-npm" id="k-npm">-</div>
+          <div class="kartu-prodi" id="k-prodi">-</div>
+          <div class="kartu-status-row">
+            <span class="kartu-badge badge-aktif" id="k-status">Aktif</span>
+          </div>
+        </div>
+      </div>
+      <div class="kartu-footer">
+        <div class="masa-aktif-box">
+          <div class="masa-aktif-label">Masa Aktif</div>
+          <div class="masa-aktif-val" id="k-masa">-</div>
+        </div>
+        <div class="kartu-tahun">
+          Bergabung: <span id="k-tahun">-</span><br>
+          <small>HIMTI UMB</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-wrap">
+      <button class="btn btn-gold" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+      <button class="btn btn-outline" onclick="location.reload()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="alert-warn" id="alert-warn"></div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+if (!token || localStorage.getItem('himti_role') !== 'anggota') window.location.href = '/anggota/login.html';
+document.getElementById('nav-nama').textContent = localStorage.getItem('himti_nama') || '-';
+function logout(){ himtiLogout(); }
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+async function loadKartu() {
+  try {
+    const res = await fetch('/api/anggota/kartu', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    document.getElementById('loading').style.display = 'none';
+
+    if (!res.ok) {
+      const w = document.getElementById('alert-warn');
+      w.textContent = data.error || 'Kartu belum tersedia.';
+      w.style.display = 'block';
+      return;
+    }
+
+    const s = data.status;
+    if (s === 'pending') {
+      const w = document.getElementById('alert-warn');
+      w.textContent = '⏳ Akun Anda masih pending. Kartu anggota akan tersedia setelah admin mengaktifkan akun.';
+      w.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('k-nama').textContent = data.nama;
+    document.getElementById('k-npm').textContent = 'NPM: ' + data.npm;
+    document.getElementById('k-prodi').textContent = (data.prodi || '') + (data.angkatan ? ' · ' + data.angkatan : '');
+    document.getElementById('k-tahun').textContent = data.tahun_bergabung || '-';
+
+    // Masa aktif
+    const mulai = fmtDate(data.masa_aktif_mulai);
+    const sampai = fmtDate(data.masa_aktif_sampai);
+    document.getElementById('k-masa').textContent = mulai + ' – ' + sampai;
+
+    // Status badge
+    const badge = document.getElementById('k-status');
+    if (s === 'aktif') { badge.className = 'kartu-badge badge-aktif'; badge.textContent = '✅ AKTIF'; }
+    else if (s === 'kadaluarsa') { badge.className = 'kartu-badge badge-kadaluarsa'; badge.textContent = '❌ KADALUARSA'; }
+    else { badge.className = 'kartu-badge badge-pending'; badge.textContent = s.toUpperCase(); }
+
+    // Foto
+    if (data.foto_url) {
+      document.getElementById('foto-wrap').innerHTML = `<img src="${data.foto_url}" class="kartu-foto" alt="foto">`;
+    }
+
+    document.getElementById('kartu-wrapper').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    const w = document.getElementById('alert-warn');
+    w.textContent = 'Gagal memuat kartu. Silakan refresh halaman.';
+    w.style.display = 'block';
+  }
+}
+loadKartu();
+</script>
+</body>
+</html>

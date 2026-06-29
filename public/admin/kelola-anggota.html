@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Anggota - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html" class="active"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Kelola <span>Anggota</span></div></div>
+  <div class="content">
+
+    <!-- FILTER & EXPORT -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header">
+        <span class="table-title">🔍 Filter & Export</span>
+      </div>
+      <div style="padding:16px">
+        <div class="filter-row" style="margin-bottom:12px">
+          <div class="form-group">
+            <label class="form-label">Cari Nama/NPM</label>
+            <input type="text" id="f-q" placeholder="nama atau NPM..." style="width:200px" onkeydown="if(event.key==='Enter')loadAnggota()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="f-status" style="width:150px" onchange="loadAnggota()">
+              <option value="">Semua Status</option>
+              <option value="pending">Pending</option>
+              <option value="aktif">Aktif</option>
+              <option value="kadaluarsa">Kadaluarsa</option>
+              <option value="nonaktif">Nonaktif</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tahun Bergabung</label>
+            <select id="f-tahun" style="width:150px" onchange="loadAnggota()">
+              <option value="">Semua Tahun</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-gold" onclick="loadAnggota()">Cari</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-outline" onclick="exportExcel()">📥 Export Excel (filter aktif)</button>
+          <span style="color:var(--gray);font-size:.78rem">atau pilih tahun spesifik:</span>
+          <select id="export-tahun" style="width:130px">
+            <option value="">Semua Tahun</option>
+          </select>
+          <button class="btn btn-success" onclick="exportTahun()">📥 Export Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">👥 Data Anggota</span>
+        <span id="jumlah-label" style="color:var(--gray);font-size:.82rem"></span>
+      </div>
+      <div id="tbl-loading"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table id="tbl-anggota" style="display:none">
+          <thead>
+            <tr>
+              <th>No</th><th>Nama / NPM</th><th>Prodi & Angkatan</th>
+              <th>Status</th><th>Masa Aktif</th><th>Bergabung</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty" id="tbl-empty" style="display:none">Tidak ada data anggota.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL ANGGOTA -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <h3>👤 Detail Anggota</h3>
+    <div id="detail-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-success btn-sm" id="btn-aktifkan" onclick="aksi('aktifkan')">✅ Aktifkan</button>
+      <button class="btn btn-danger btn-sm" id="btn-nonaktif" onclick="aksi('nonaktifkan')">⛔ Nonaktifkan</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Tutup</button>
+    </div>
+    <div class="alert alert-success" id="modal-ok"></div>
+    <div class="alert alert-danger" id="modal-err"></div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+
+// Populate year dropdowns
+const currentYear = new Date().getFullYear();
+[document.getElementById('f-tahun'), document.getElementById('export-tahun')].forEach(sel => {
+  for (let y = currentYear; y >= 2015; y--) {
+    const o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o);
+  }
+});
+
+function fmtDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
+
+function statusBadge(s) {
+  const m = { aktif: ['badge-aktif','✅ Aktif'], pending: ['badge-pending','⏳ Pending'], kadaluarsa: ['badge-kadaluarsa','❌ Kadaluarsa'], nonaktif: ['badge-nonaktif','⛔ Nonaktif'] };
+  const [c, l] = m[s] || ['badge-nonaktif', s];
+  return `<span class="badge ${c}">${l}</span>`;
+}
+
+let currentData = [];
+let selectedId = null;
+
+async function loadAnggota() {
+  document.getElementById('tbl-loading').style.display = 'block';
+  document.getElementById('tbl-anggota').style.display = 'none';
+  document.getElementById('tbl-empty').style.display = 'none';
+  const q = document.getElementById('f-q').value.trim();
+  const status = document.getElementById('f-status').value;
+  const tahun = document.getElementById('f-tahun').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (status) params.set('status', status);
+  if (tahun) params.set('tahun', tahun);
+  try {
+    const res = await fetch('/api/admin/anggota?' + params, { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    currentData = data;
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('jumlah-label').textContent = data.length + ' anggota';
+    if (!data.length) { document.getElementById('tbl-empty').style.display = 'block'; return; }
+    const rows = data.map((a, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><div style="font-weight:600">${a.nama}</div><div style="color:var(--gold);font-size:.78rem;font-family:monospace">${a.npm}</div></td>
+        <td><div style="font-size:.85rem">${a.prodi || '-'}</div><div style="color:var(--gray);font-size:.75rem">Angkatan ${a.angkatan || '-'}</div></td>
+        <td>${statusBadge(a.status)}</td>
+        <td><div style="font-size:.82rem">${fmtDate(a.masa_aktif_mulai)}</div><div style="color:var(--gray);font-size:.75rem">s/d ${fmtDate(a.masa_aktif_sampai)}</div></td>
+        <td style="font-size:.82rem">${a.tahun_bergabung || '-'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="openDetail(${a.id})">Detail</button></td>
+      </tr>`).join('');
+    document.getElementById('tbl-body').innerHTML = rows;
+    document.getElementById('tbl-anggota').style.display = 'table';
+  } catch (e) {
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('tbl-empty').style.display = 'block';
+    document.getElementById('tbl-empty').textContent = 'Gagal memuat data.';
+  }
+}
+
+function openDetail(id) {
+  const a = currentData.find(x => x.id === id);
+  if (!a) return;
+  selectedId = id;
+  const content = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.88rem;margin-bottom:16px">
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Nama</div><div style="font-weight:600">${a.nama}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">NPM</div><div style="font-weight:600;color:var(--gold)">${a.npm}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Email</div><div>${a.email || '-'}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">No HP</div><div>${a.no_hp || '-'}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Status</div>${statusBadge(a.status)}</div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Bergabung</div><div>${a.tahun_bergabung || '-'}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Masa Aktif Mulai</div><div>${fmtDate(a.masa_aktif_mulai)}</div></div>
+      <div style="background:var(--navy3);border-radius:8px;padding:12px"><div style="color:var(--gray);font-size:.75rem">Masa Aktif Sampai</div><div>${fmtDate(a.masa_aktif_sampai)}</div></div>
+    </div>`;
+  document.getElementById('detail-content').innerHTML = content;
+  document.getElementById('modal-ok').style.display = 'none';
+  document.getElementById('modal-err').style.display = 'none';
+  const btnAktif = document.getElementById('btn-aktifkan');
+  const btnNon = document.getElementById('btn-nonaktif');
+  btnAktif.style.display = (a.status === 'pending' || a.status === 'nonaktif' || a.status === 'kadaluarsa') ? 'inline-block' : 'none';
+  btnNon.style.display = (a.status === 'aktif') ? 'inline-block' : 'none';
+  document.getElementById('modal-detail').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal-detail').classList.remove('show'); selectedId = null; }
+
+async function aksi(action) {
+  if (!selectedId) return;
+  const ok = document.getElementById('modal-ok');
+  const err = document.getElementById('modal-err');
+  ok.style.display = err.style.display = 'none';
+  try {
+    const res = await fetch(`/api/admin/anggota/${selectedId}/aktivasi`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Berhasil'; ok.style.display = 'block'; setTimeout(() => { closeModal(); loadAnggota(); }, 1200); }
+  } catch (e) { err.textContent = 'Gagal'; err.style.display = 'block'; }
+}
+
+function exportExcel() {
+  const q = document.getElementById('f-q').value.trim();
+  const status = document.getElementById('f-status').value;
+  const tahun = document.getElementById('f-tahun').value;
+  const params = new URLSearchParams();
+  if (tahun) params.set('tahun', tahun);
+  if (status) params.set('status', status);
+  window.open('/api/admin/anggota/export-excel?' + params + '&token=' + token, '_blank');
+}
+
+function exportTahun() {
+  const tahun = document.getElementById('export-tahun').value;
+  const params = new URLSearchParams();
+  if (tahun) params.set('tahun', tahun);
+  window.open('/api/admin/anggota/export-excel?' + params + '&token=' + token, '_blank');
+}
+
+// Handle token in URL for download
+document.addEventListener('DOMContentLoaded', () => {
+  // Intercept export requests and add auth header
+});
+
+loadAnggota();
+document.getElementById('modal-detail').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+
+// Fix: add token to export URL via fetch for download
+async function downloadExcel(url) {
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!res.ok) { alert('Gagal export'); return; }
+  const blob = await res.blob();
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = 'anggota.xlsx'; a.click();
+  URL.revokeObjectURL(u);
+}
+
+// Override export functions to use fetch
+function exportExcel() {
+  const tahun = document.getElementById('f-tahun').value;
+  const status = document.getElementById('f-status').value;
+  const params = new URLSearchParams();
+  if (tahun) params.set('tahun', tahun);
+  downloadExcel('/api/admin/anggota/export-excel?' + params);
+}
+function exportTahun() {
+  const tahun = document.getElementById('export-tahun').value;
+  const params = new URLSearchParams();
+  if (tahun) params.set('tahun', tahun);
+  downloadExcel('/api/admin/anggota/export-excel?' + params);
+}
+</script>
+</body>
+</html>

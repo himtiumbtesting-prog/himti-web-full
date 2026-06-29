@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Super Admin - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--danger:#dc3545}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.back{position:fixed;top:20px;left:20px;color:var(--gray);text-decoration:none;font-size:.9rem}
+.back:hover{color:var(--gold)}
+.card{background:var(--navy2);border-radius:16px;padding:40px;width:100%;max-width:400px;border:1px solid rgba(201,162,39,.3);box-shadow:0 0 40px rgba(201,162,39,.08)}
+.logo-area{text-align:center;margin-bottom:28px}
+.logo-circle{width:64px;height:64px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:var(--navy);margin:0 auto 12px;box-shadow:0 0 20px rgba(201,162,39,.3)}
+h1{font-size:1.4rem;color:var(--gold);margin-bottom:4px}
+.sub{color:var(--gray);font-size:.83rem}
+.sa-badge{background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);border-radius:8px;padding:8px 14px;text-align:center;font-size:.82rem;color:var(--gold);margin-bottom:22px;font-weight:600}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:.83rem;color:var(--gray);margin-bottom:5px}
+input{width:100%;padding:11px 14px;background:var(--navy3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font-size:.95rem;outline:none;transition:.2s}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
+.btn{width:100%;padding:12px;background:var(--gold);color:var(--navy);border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+.btn:hover{background:var(--gold2)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:11px 14px;border-radius:8px;margin-top:12px;font-size:.88rem;display:none;background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
+.links{text-align:center;margin-top:18px;font-size:.83rem;color:var(--gray)}
+.links a{color:var(--gold);text-decoration:none}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<a href="/admin/login.html" class="back">← Login Admin</a>
+<div class="card">
+  <div class="logo-area">
+    <div class="logo-circle">SA</div>
+    <h1>HIMTI UMB</h1>
+    <p class="sub">Portal Super Admin</p>
+  </div>
+  <div class="sa-badge">⚡ Akses Level Tertinggi</div>
+  <div class="form-group">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="superadmin" onkeydown="if(event.key==='Enter')login()">
+  </div>
+  <div class="form-group">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="password super admin" onkeydown="if(event.key==='Enter')login()">
+  </div>
+  <div id="kick-msg" style="padding:11px 14px;border-radius:8px;margin-bottom:10px;font-size:.88rem;display:none"></div>
+  <div class="alert" id="alert-err"></div>
+  <button class="btn" id="btn-login" onclick="login()">Login Super Admin</button>
+  <div class="links"><a href="/admin/login.html">Login sebagai Admin biasa</a></div>
+</div>
+<script>
+if(localStorage.getItem('himti_token')&&localStorage.getItem('himti_role')==='superadmin')
+  window.location.href='/superadmin/dashboard.html';
+async function login(){
+  const btn=document.getElementById('btn-login');
+  const err=document.getElementById('alert-err');
+  err.style.display='none';
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  if(!username||!password){err.textContent='Username dan password wajib diisi!';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Masuk...';
+  try{
+    const res=await fetch('/api/auth/login-superadmin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error;err.style.display='block';}
+    else{
+      localStorage.setItem('himti_token',data.token);
+      localStorage.setItem('himti_role','superadmin');
+      localStorage.setItem('himti_nama','Super Admin');
+      window.location.href='/superadmin/dashboard.html';
+    }
+  }catch(e){err.textContent='Gagal terhubung ke server';err.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='Login Super Admin';}
+}
+</script>
+</body>
+</html>

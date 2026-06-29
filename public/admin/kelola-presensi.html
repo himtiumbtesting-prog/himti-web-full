@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Presensi - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html" class="active"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Kelola <span>Presensi</span> Kegiatan</div></div>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- BUAT KEGIATAN -->
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">➕ Buat Kegiatan Baru</span></div>
+        <div style="padding:20px">
+          <div class="form-group">
+            <label class="form-label">Nama Kegiatan <span style="color:var(--gold)">*</span></label>
+            <input type="text" id="nama-kegiatan" style="width:100%" placeholder="contoh: Rapat Rutin HIMTI">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal <span style="color:var(--gold)">*</span></label>
+            <input type="date" id="tgl-kegiatan" style="width:100%">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deskripsi</label>
+            <textarea id="deskripsi-kegiatan" rows="2" style="width:100%" placeholder="Deskripsi singkat kegiatan..."></textarea>
+          </div>
+          <div class="alert alert-success" id="ok-buat"></div>
+          <div class="alert alert-danger" id="err-buat"></div>
+          <button class="btn btn-gold" style="width:100%" onclick="buatKegiatan()">➕ Buat & Generate Kode</button>
+        </div>
+      </div>
+
+      <!-- KODE AKTIF -->
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">🔑 Kode Presensi Aktif</span></div>
+        <div style="padding:20px" id="kode-aktif-wrap">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAFTAR KEGIATAN -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-header">
+        <span class="table-title">📋 Semua Kegiatan</span>
+        <button class="btn btn-outline btn-sm" onclick="loadKegiatan()">↺ Refresh</button>
+      </div>
+      <div id="tbl-loading"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table id="tbl" style="display:none">
+          <thead><tr><th>Nama Kegiatan</th><th>Tanggal</th><th>Kode</th><th>Status</th><th>Hadir</th><th>Aksi</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty" id="tbl-empty" style="display:none">Belum ada kegiatan dibuat.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PESERTA -->
+<div class="modal-overlay" id="modal-peserta">
+  <div class="modal" style="max-width:600px">
+    <h3 id="modal-peserta-title">Daftar Hadir</h3>
+    <div id="peserta-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-peserta').classList.remove('show')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+
+// Set default tanggal ke hari ini
+document.getElementById('tgl-kegiatan').value = new Date().toISOString().split('T')[0];
+
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '-'; }
+function fmtDT(d) { return d ? new Date(d).toLocaleString('id-ID') : '-'; }
+
+let allKegiatan = [];
+
+async function loadKegiatan() {
+  document.getElementById('tbl-loading').style.display = 'block';
+  document.getElementById('tbl').style.display = 'none';
+  document.getElementById('tbl-empty').style.display = 'none';
+  try {
+    const res = await fetch('/api/admin/kegiatan', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    allKegiatan = data;
+    document.getElementById('tbl-loading').style.display = 'none';
+
+    // Kode aktif
+    const aktif = data.filter(k => k.is_active);
+    const kodeWrap = document.getElementById('kode-aktif-wrap');
+    if (!aktif.length) {
+      kodeWrap.innerHTML = '<p style="color:var(--gray);font-size:.85rem;text-align:center">Tidak ada kode aktif saat ini.</p>';
+    } else {
+      kodeWrap.innerHTML = aktif.map(k => `
+        <div style="background:var(--navy3);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:.9rem;margin-bottom:8px">${k.nama}</div>
+          <div style="background:var(--navy);border-radius:8px;padding:12px;text-align:center;margin-bottom:10px">
+            <div style="font-size:.7rem;color:var(--gray);margin-bottom:4px">KODE PRESENSI</div>
+            <div style="font-size:2.2rem;font-weight:900;color:var(--gold);letter-spacing:.3em;font-family:monospace">${k.kode_presensi}</div>
+          </div>
+          <div style="font-size:.78rem;color:var(--gray)">📅 ${fmtDate(k.tanggal)} • 👥 ${k.jumlah_hadir} hadir</div>
+          <button class="btn btn-danger btn-sm" style="margin-top:10px;width:100%" onclick="toggleStatus(${k.id},true)">🔒 Tutup Presensi</button>
+        </div>`).join('');
+    }
+
+    if (!data.length) { document.getElementById('tbl-empty').style.display = 'block'; return; }
+    const rows = data.map(k => `
+      <tr>
+        <td><div style="font-weight:600">${k.nama}</div>${k.deskripsi?`<div style="color:var(--gray);font-size:.75rem">${k.deskripsi}</div>`:''}</td>
+        <td style="font-size:.85rem">${fmtDate(k.tanggal)}</td>
+        <td><span style="font-family:monospace;font-size:1rem;font-weight:700;color:var(--gold);letter-spacing:.15em">${k.kode_presensi}</span></td>
+        <td>${k.is_active
+          ? '<span class="badge badge-aktif">🟢 Aktif</span>'
+          : '<span class="badge badge-nonaktif">⚫ Tutup</span>'}</td>
+        <td><span style="font-weight:700;color:var(--gold)">${k.jumlah_hadir}</span> orang</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px">
+          <button class="btn btn-outline btn-sm" onclick="lihatPeserta(${k.id})">👥 Peserta</button>
+          <button class="btn ${k.is_active?'btn-danger':'btn-success'} btn-sm" onclick="toggleStatus(${k.id},${k.is_active})">
+            ${k.is_active ? '🔒 Tutup' : '🔓 Buka'}
+          </button>
+        </td>
+      </tr>`).join('');
+    document.getElementById('tbl-body').innerHTML = rows;
+    document.getElementById('tbl').style.display = 'table';
+  } catch (e) {
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('tbl-empty').style.display = 'block';
+    document.getElementById('tbl-empty').textContent = 'Gagal memuat data.';
+  }
+}
+
+async function buatKegiatan() {
+  const ok = document.getElementById('ok-buat'); const err = document.getElementById('err-buat');
+  ok.style.display = err.style.display = 'none';
+  const nama = document.getElementById('nama-kegiatan').value.trim();
+  const tgl = document.getElementById('tgl-kegiatan').value;
+  if (!nama || !tgl) { err.textContent='Nama dan tanggal wajib diisi!'; err.style.display='block'; return; }
+  try {
+    const res = await fetch('/api/admin/kegiatan', {
+      method:'POST',
+      headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
+      body:JSON.stringify({ nama, tanggal:tgl, deskripsi:document.getElementById('deskripsi-kegiatan').value })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent=d.error; err.style.display='block'; }
+    else {
+      ok.textContent = `✅ Kegiatan dibuat! Kode: ${d.kode_presensi}`;
+      ok.style.display='block';
+      document.getElementById('nama-kegiatan').value='';
+      document.getElementById('deskripsi-kegiatan').value='';
+      loadKegiatan();
+    }
+  } catch(e) { err.textContent='Gagal membuat kegiatan.'; err.style.display='block'; }
+}
+
+async function toggleStatus(id, isActive) {
+  const action = isActive ? 'tutup' : 'buka';
+  if (!confirm(`Yakin ingin ${action} presensi ini?`)) return;
+  try {
+    await fetch(`/api/admin/kegiatan/${id}/toggle`, { method:'PUT', headers:{ Authorization:'Bearer '+token } });
+    loadKegiatan();
+  } catch(e) { alert('Gagal mengubah status.'); }
+}
+
+async function lihatPeserta(id) {
+  const k = allKegiatan.find(x => x.id === id);
+  document.getElementById('modal-peserta-title').textContent = (k?.nama || 'Kegiatan') + ' — Daftar Hadir';
+  document.getElementById('peserta-list').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('modal-peserta').classList.add('show');
+  try {
+    const res = await fetch(`/api/admin/kegiatan/${id}/peserta`, { headers:{ Authorization:'Bearer '+token } });
+    const data = await res.json();
+    if (!data.length) {
+      document.getElementById('peserta-list').innerHTML = '<p style="color:var(--gray);text-align:center;padding:20px">Belum ada peserta hadir.</p>';
+      return;
+    }
+    document.getElementById('peserta-list').innerHTML = `
+      <div style="margin-bottom:12px;color:var(--gray);font-size:.82rem">Total hadir: <strong style="color:var(--gold)">${data.length} orang</strong></div>
+      <div style="max-height:350px;overflow-y:auto">
+        ${data.map((p,i) => `
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem">
+            <div>${i+1}. <strong>${p.nama}</strong> <span style="color:var(--gold);font-family:monospace;font-size:.8rem">${p.npm}</span></div>
+            <div style="color:var(--gray);font-size:.78rem">${fmtDT(p.waktu_presensi)}</div>
+          </div>`).join('')}
+      </div>`;
+  } catch(e) {
+    document.getElementById('peserta-list').innerHTML = '<p style="color:var(--danger)">Gagal memuat peserta.</p>';
+  }
+}
+
+loadKegiatan();
+document.getElementById('modal-peserta').addEventListener('click', e => { if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+</script>
+</body>
+</html>

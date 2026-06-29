@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar Anggota - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--danger:#dc3545;--success:#28a745}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+header{background:var(--navy2);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-circle{width:42px;height:42px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:var(--navy)}
+.logo h1{font-size:1.2rem;color:var(--gold);font-weight:800}
+.logo p{font-size:.7rem;color:var(--gray)}
+header a{color:var(--gray);text-decoration:none;font-size:.9rem}
+header a:hover{color:var(--gold)}
+.container{max-width:900px;margin:40px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:30px}
+@media(max-width:700px){.container{grid-template-columns:1fr}}
+.form-card{background:var(--navy2);border-radius:14px;padding:30px;border:1px solid var(--navy3)}
+.form-title{font-size:1.4rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+.form-sub{color:var(--gray);font-size:.85rem;margin-bottom:24px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:.85rem;color:var(--gray);margin-bottom:6px;font-weight:500}
+label span{color:var(--gold)}
+input,select{width:100%;padding:10px 14px;background:var(--navy3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font-size:.9rem;outline:none;transition:.2s}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
+input[type=file]{padding:8px;cursor:pointer}
+select option{background:var(--navy2)}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;transition:.2s;margin-top:8px}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-gold:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:12px 16px;border-radius:8px;margin-top:12px;font-size:.9rem;display:none}
+.alert-success{background:rgba(40,167,69,.15);border:1px solid var(--success);color:#5dd87a}
+.alert-danger{background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
+.info-box{background:var(--navy3);border-radius:12px;padding:24px;border:1px solid rgba(201,162,39,.3)}
+.info-box h3{color:var(--gold);margin-bottom:16px;font-size:1.1rem}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:.9rem}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--gray)}
+.info-value{color:var(--white);font-weight:600;text-align:right}
+.steps{margin-top:20px}
+.step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.85rem;color:var(--gray)}
+.step:last-child{border-bottom:none}
+.step-num{width:24px;height:24px;background:var(--gold);color:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+.login-link{text-align:center;margin-top:16px;font-size:.85rem;color:var(--gray)}
+.login-link a{color:var(--gold);text-decoration:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.badge-gold{background:var(--gold);color:var(--navy);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<header>
+  <div class="logo">
+    <div class="logo-circle">H</div>
+    <div>
+      <h1>HIMTI UMB</h1>
+      <p>Himpunan Mahasiswa Teknik Informatika</p>
+    </div>
+  </div>
+  <a href="/index.html">← Beranda</a>
+</header>
+
+<div class="container">
+  <!-- FORM DAFTAR -->
+  <div class="form-card">
+    <div class="form-title">📝 Daftar Anggota</div>
+    <p class="form-sub">Isi data diri lengkap untuk bergabung dengan HIMTI UMB</p>
+    <div class="form-group">
+      <label>Username <span>*</span></label>
+      <input type="text" id="username" placeholder="username login kamu">
+    </div>
+    <div class="form-group">
+      <label>Password <span>*</span></label>
+      <input type="password" id="password" placeholder="minimal 6 karakter">
+    </div>
+    <div class="form-group">
+      <label>Nama Lengkap <span>*</span></label>
+      <input type="text" id="nama" placeholder="sesuai KTM">
+    </div>
+    <div class="form-group">
+      <label>NPM <span>*</span></label>
+      <input type="text" id="npm" placeholder="Nomor Pokok Mahasiswa">
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Angkatan</label>
+        <input type="text" id="angkatan" placeholder="contoh: 2023">
+      </div>
+      <div class="form-group">
+        <label>Program Studi</label>
+        <select id="prodi">
+          <option value="Teknik Informatika">Teknik Informatika</option>
+          <option value="Sistem Informasi">Sistem Informasi</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="email aktif">
+    </div>
+    <div class="form-group">
+      <label>No. HP / WhatsApp</label>
+      <input type="text" id="no_hp" placeholder="contoh: 082345678901">
+    </div>
+    <div class="form-group">
+      <label>Foto Profil</label>
+      <input type="file" id="foto" accept="image/*">
+    </div>
+    <div class="alert alert-success" id="alert-ok"></div>
+    <div class="alert alert-danger" id="alert-err"></div>
+    <button class="btn btn-gold" id="btn-daftar" onclick="daftar()">Daftar Sekarang</button>
+    <p class="login-link">Sudah punya akun? <a href="/anggota/login.html">Login di sini</a></p>
+  </div>
+
+  <!-- INFO PEMBAYARAN -->
+  <div>
+    <div class="info-box">
+      <h3>💳 Cara Pembayaran Iuran</h3>
+      <div class="info-row">
+        <span class="info-label">Bank</span>
+        <span class="info-value" id="nama-bank">Memuat...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Nomor Rekening</span>
+        <span class="info-value" id="norek">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Atas Nama</span>
+        <span class="info-value" id="atas-nama">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Nominal Iuran</span>
+        <span class="info-value"><span class="badge-gold" id="nominal">-</span></span>
+      </div>
+      <div style="margin-top:14px;color:var(--gray);font-size:.85rem;font-style:italic" id="instruksi">-</div>
+    </div>
+
+    <div class="steps" style="margin-top:20px">
+      <div class="info-box">
+        <h3>📋 Langkah Setelah Daftar</h3>
+        <div class="step"><div class="step-num">1</div><div>Isi formulir pendaftaran dengan data lengkap dan benar</div></div>
+        <div class="step"><div class="step-num">2</div><div>Transfer iuran ke rekening yang tertera di atas</div></div>
+        <div class="step"><div class="step-num">3</div><div>Login ke akun baru kamu</div></div>
+        <div class="step"><div class="step-num">4</div><div>Upload bukti transfer di menu <strong style="color:var(--gold)">Bayar Iuran</strong></div></div>
+        <div class="step"><div class="step-num">5</div><div>Admin akan memverifikasi dan mengaktifkan akun (1-3 hari kerja)</div></div>
+        <div class="step"><div class="step-num">6</div><div>Masa aktif keanggotaan berlaku <strong style="color:var(--gold)">2 tahun</strong> sejak aktivasi</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;background:var(--navy3);border-radius:10px;padding:16px;border-left:3px solid var(--gold)">
+      <p style="color:var(--gray);font-size:.85rem">📞 Ada pertanyaan? Hubungi admin HIMTI:</p>
+      <p style="color:var(--gold);font-size:.9rem;margin-top:6px" id="wa-info">WhatsApp: 6281234567890</p>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadInfo() {
+  try {
+    const [infoByr, kontak] = await Promise.all([
+      fetch('/api/info-pembayaran').then(r=>r.json()),
+      fetch('/api/kontak').then(r=>r.json())
+    ]);
+    document.getElementById('nama-bank').textContent = infoByr.nama_bank || '-';
+    document.getElementById('norek').textContent = infoByr.nomor_rekening || '-';
+    document.getElementById('atas-nama').textContent = infoByr.atas_nama || '-';
+    document.getElementById('nominal').textContent = 'Rp '+(infoByr.nominal_iuran||50000).toLocaleString('id-ID');
+    document.getElementById('instruksi').textContent = infoByr.instruksi || '-';
+    if (kontak.nomor_wa) document.getElementById('wa-info').textContent = 'WhatsApp: '+kontak.nomor_wa;
+  } catch(e){}
+}
+loadInfo();
+
+async function daftar() {
+  const btn = document.getElementById('btn-daftar');
+  const ok = document.getElementById('alert-ok');
+  const err = document.getElementById('alert-err');
+  ok.style.display = err.style.display = 'none';
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const nama = document.getElementById('nama').value.trim();
+  const npm = document.getElementById('npm').value.trim();
+  if (!username || !password || !nama || !npm) {
+    err.textContent = 'Username, password, nama, dan NPM wajib diisi!';
+    err.style.display = 'block'; return;
+  }
+  if (password.length < 6) {
+    err.textContent = 'Password minimal 6 karakter!';
+    err.style.display = 'block'; return;
+  }
+  btn.disabled = true; btn.textContent = 'Mendaftar...';
+  const fd = new FormData();
+  fd.append('username', username);
+  fd.append('password', password);
+  fd.append('nama', nama);
+  fd.append('npm', npm);
+  fd.append('email', document.getElementById('email').value);
+  fd.append('no_hp', document.getElementById('no_hp').value);
+  fd.append('angkatan', document.getElementById('angkatan').value);
+  fd.append('prodi', document.getElementById('prodi').value);
+  const foto = document.getElementById('foto').files[0];
+  if (foto) fd.append('foto', foto);
+  try {
+    const res = await fetch('/api/auth/register', { method:'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; err.style.display='block'; }
+    else {
+      ok.textContent = '✅ '+data.message;
+      ok.style.display='block';
+      setTimeout(() => window.location.href='/anggota/login.html', 3000);
+    }
+  } catch(e) { err.textContent='Gagal terhubung ke server'; err.style.display='block'; }
+  finally { btn.disabled=false; btn.textContent='Daftar Sekarang'; }
+}
+</script>
+</body>
+</html>

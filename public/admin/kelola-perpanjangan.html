@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Perpanjangan - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html" class="active"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Kelola <span>Perpanjangan</span> Masa Aktif</div></div>
+  <div class="content">
+    <div style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.88rem;color:var(--gray)">
+      ℹ️ Ketika perpanjangan disetujui, masa aktif anggota akan diperpanjang <strong style="color:var(--white)">2 tahun</strong> dari masa aktif yang ada (atau dari tanggal sekarang jika sudah kadaluarsa).
+    </div>
+
+    <!-- FILTER -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header"><span class="table-title">🔍 Filter</span></div>
+      <div style="padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="f-status" onchange="loadData()" style="width:150px">
+            <option value="">Semua</option>
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Disetujui</option>
+            <option value="rejected">Ditolak</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" onclick="loadData()">Filter</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">🔄 Daftar Permohonan Perpanjangan</span>
+        <span id="jumlah-label" style="color:var(--gray);font-size:.82rem"></span>
+      </div>
+      <div id="tbl-loading"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table id="tbl" style="display:none">
+          <thead><tr><th>Anggota</th><th>Masa Aktif Lama</th><th>Masa Aktif Baru</th><th>Tanggal Ajuan</th><th>Status</th><th>Bukti</th><th>Aksi</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty" id="tbl-empty" style="display:none">Tidak ada permohonan perpanjangan.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROSES -->
+<div class="modal-overlay" id="modal-proses">
+  <div class="modal">
+    <h3 id="modal-title">Proses Perpanjangan</h3>
+    <div id="modal-info" style="background:var(--navy3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:.88rem"></div>
+    <div id="bukti-preview" style="margin-bottom:16px"></div>
+    <div class="form-group">
+      <label class="form-label">Catatan Admin (opsional)</label>
+      <textarea id="catatan-admin" rows="3" style="width:100%" placeholder="Tuliskan catatan jika perlu..."></textarea>
+    </div>
+    <div class="alert alert-success" id="modal-ok"></div>
+    <div class="alert alert-danger" id="modal-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-success btn-sm" id="btn-setujui" onclick="proses('approve')">✅ Setujui</button>
+      <button class="btn btn-danger btn-sm" id="btn-tolak" onclick="proses('reject')">❌ Tolak</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+const role = localStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+
+function fmtDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
+function fmtDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('id-ID'); }
+
+let allData = [];
+let selectedId = null;
+
+function statusBadge(s) {
+  const m = { pending: ['badge-pending','⏳ Pending'], approved: ['badge-approved','✅ Disetujui'], rejected: ['badge-rejected','❌ Ditolak'] };
+  const [c, l] = m[s] || ['badge-nonaktif', s];
+  return `<span class="badge ${c}">${l}</span>`;
+}
+
+async function loadData() {
+  document.getElementById('tbl-loading').style.display = 'block';
+  document.getElementById('tbl').style.display = 'none';
+  document.getElementById('tbl-empty').style.display = 'none';
+  const status = document.getElementById('f-status').value;
+  const params = status ? '?status_filter=' + status : '';
+  try {
+    const res = await fetch('/api/admin/perpanjangan', { headers: { Authorization: 'Bearer ' + token } });
+    let data = await res.json();
+    if (status) data = data.filter(d => d.status === status);
+    allData = data;
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('jumlah-label').textContent = data.length + ' permohonan';
+    if (!data.length) { document.getElementById('tbl-empty').style.display = 'block'; return; }
+    const rows = data.map(d => `
+      <tr>
+        <td><div style="font-weight:600">${d.nama}</div><div style="color:var(--gold);font-size:.75rem;font-family:monospace">${d.npm}</div></td>
+        <td style="font-size:.82rem">${fmtDate(d.masa_aktif_lama)}</td>
+        <td style="font-size:.82rem">${d.masa_aktif_baru ? fmtDate(d.masa_aktif_baru) : '<span style="color:var(--gray)">-</span>'}</td>
+        <td style="font-size:.78rem;color:var(--gray)">${fmtDateTime(d.requested_at)}</td>
+        <td>${statusBadge(d.status)}</td>
+        <td>${d.bukti_url ? `<button class="btn btn-outline btn-sm" onclick="lihatBukti('${d.id}')">Lihat</button>` : '<span style="color:var(--gray);font-size:.78rem">-</span>'}</td>
+        <td>${d.status === 'pending' ? `<button class="btn btn-gold btn-sm" onclick="openProses(${d.id})">Proses</button>` : '<span style="color:var(--gray);font-size:.78rem">Sudah diproses</span>'}</td>
+      </tr>`).join('');
+    document.getElementById('tbl-body').innerHTML = rows;
+    document.getElementById('tbl').style.display = 'table';
+  } catch (e) {
+    document.getElementById('tbl-loading').style.display = 'none';
+    document.getElementById('tbl-empty').style.display = 'block';
+    document.getElementById('tbl-empty').textContent = 'Gagal memuat data.';
+  }
+}
+
+function openProses(id) {
+  const d = allData.find(x => x.id === id);
+  if (!d) return;
+  selectedId = id;
+  document.getElementById('modal-info').innerHTML = `
+    <div><strong>${d.nama}</strong> (${d.npm})</div>
+    <div style="color:var(--gray);margin-top:6px">Masa aktif lama: ${fmtDate(d.masa_aktif_lama)}</div>
+    <div style="color:var(--gold)">Jika disetujui → diperpanjang 2 tahun dari masa aktif yang ada</div>
+    ${d.catatan ? `<div style="margin-top:8px;font-style:italic">Catatan anggota: "${d.catatan}"</div>` : ''}`;
+  if (d.bukti_url) {
+    document.getElementById('bukti-preview').innerHTML = `<div style="margin-bottom:8px;color:var(--gray);font-size:.82rem">Bukti Pembayaran:</div><img src="${d.bukti_url}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--navy3)" alt="bukti">`;
+  } else {
+    document.getElementById('bukti-preview').innerHTML = '';
+  }
+  document.getElementById('catatan-admin').value = '';
+  document.getElementById('modal-ok').style.display = 'none';
+  document.getElementById('modal-err').style.display = 'none';
+  document.getElementById('btn-setujui').style.display = 'inline-block';
+  document.getElementById('btn-tolak').style.display = 'inline-block';
+  document.getElementById('modal-proses').classList.add('show');
+}
+
+function lihatBukti(id) {
+  const d = allData.find(x => x.id == id);
+  if (!d || !d.bukti_url) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<img src="${d.bukti_url}" style="max-width:100%">`);
+}
+
+function closeModal() { document.getElementById('modal-proses').classList.remove('show'); selectedId = null; }
+
+async function proses(action) {
+  if (!selectedId) return;
+  const ok = document.getElementById('modal-ok');
+  const err = document.getElementById('modal-err');
+  ok.style.display = err.style.display = 'none';
+  document.getElementById('btn-setujui').disabled = true;
+  document.getElementById('btn-tolak').disabled = true;
+  try {
+    const res = await fetch(`/api/admin/perpanjangan/${selectedId}/proses`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, catatan: document.getElementById('catatan-admin').value })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else {
+      const msg = action === 'approve'
+        ? `✅ Perpanjangan disetujui! Masa aktif baru: ${fmtDate(d.masa_aktif_baru)}`
+        : '✅ Perpanjangan ditolak.';
+      ok.textContent = msg;
+      ok.style.display = 'block';
+      document.getElementById('btn-setujui').style.display = 'none';
+      document.getElementById('btn-tolak').style.display = 'none';
+      setTimeout(() => { closeModal(); loadData(); }, 1800);
+    }
+  } catch (e) { err.textContent = 'Gagal memproses.'; err.style.display = 'block'; }
+  finally { document.getElementById('btn-setujui').disabled = false; document.getElementById('btn-tolak').disabled = false; }
+}
+
+loadData();
+document.getElementById('modal-proses').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+</script>
+</body>
+</html>

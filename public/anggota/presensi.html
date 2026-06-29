@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presensi - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
+.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:var(--gray);font-size:.85rem} .nav-user span{color:var(--white);font-weight:600}
+.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer}
+.btn-logout:hover{background:var(--danger);color:var(--white)}
+.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
+.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
+.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
+.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.main{max-width:700px;margin:0 auto;padding:28px 20px}
+.page-title{font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+.page-sub{color:var(--gray);font-size:.88rem;margin-bottom:24px}
+.card{background:var(--navy2);border-radius:14px;padding:26px;margin-bottom:20px;border:1px solid var(--navy3)}
+.card h3{color:var(--gold);font-size:1rem;margin-bottom:16px}
+.kode-input{font-size:2rem;text-align:center;letter-spacing:.3em;text-transform:uppercase;font-weight:700;font-family:monospace;padding:14px;border-radius:10px;border:2px solid rgba(255,255,255,.1);background:var(--navy3);color:var(--white);width:100%;outline:none;transition:.2s}
+.kode-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;transition:.2s;margin-top:12px}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-gold:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:12px 16px;border-radius:8px;margin-top:12px;font-size:.9rem;display:none;text-align:center}
+.alert-success{background:rgba(40,167,69,.15);border:1px solid var(--success);color:#5dd87a}
+.alert-danger{background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
+.riwayat-item{background:var(--navy3);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.riwayat-nama{font-weight:600;font-size:.9rem}
+.riwayat-tanggal{color:var(--gray);font-size:.78rem;margin-top:3px}
+.riwayat-waktu{color:var(--gold);font-size:.8rem;text-align:right}
+.spinner{width:26px;height:26px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<nav class="topnav">
+  <div class="nav-left">
+    <div class="logo-circle">H</div>
+    <span class="nav-brand">HIMTI UMB</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+    <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
+  </div>
+</nav>
+<div class="navmenu">
+  <a href="/anggota/dashboard.html">🏠 Beranda</a>
+  <a href="/anggota/profil.html">👤 Profil</a>
+  <a href="/anggota/cari-anggota.html">🔍 Cari Anggota</a>
+  <a href="/anggota/bayar-iuran.html">💳 Bayar Iuran</a>
+  <a href="/anggota/perpanjangan.html">🔄 Perpanjang</a>
+  <a href="/anggota/kartu-anggota.html">🪪 Kartu Anggota</a>
+  <a href="/anggota/presensi.html" class="active">📅 Presensi</a>
+</div>
+<div class="main">
+  <div class="page-title">📅 Presensi Kegiatan</div>
+  <p class="page-sub">Masukkan kode presensi yang diberikan panitia kegiatan</p>
+  <div class="card">
+    <h3>🔑 Input Kode Presensi</h3>
+    <input type="text" class="kode-input" id="kode" maxlength="8" placeholder="XXXXXX" onkeydown="if(event.key==='Enter')presensi()">
+    <div class="alert alert-success" id="ok"></div>
+    <div class="alert alert-danger" id="err"></div>
+    <button class="btn btn-gold" id="btn-hadir" onclick="presensi()">✅ Konfirmasi Hadir</button>
+  </div>
+  <div class="card">
+    <h3>📜 Riwayat Presensi</h3>
+    <div id="loading"><div class="spinner"></div></div>
+    <div id="riwayat-list"></div>
+  </div>
+</div>
+<script>
+const token=localStorage.getItem('himti_token');
+if(!token||localStorage.getItem('himti_role')!=='anggota')window.location.href='/anggota/login.html';
+document.getElementById('nav-nama').textContent=localStorage.getItem('himti_nama')||'-';
+function logout(){ himtiLogout(); }
+async function loadRiwayat(){
+  try{
+    const res=await fetch('/api/anggota/presensi-riwayat',{headers:{Authorization:'Bearer '+token}});
+    const data=await res.json();
+    document.getElementById('loading').style.display='none';
+    if(!Array.isArray(data)||!data.length){
+      document.getElementById('riwayat-list').innerHTML='<p style="color:var(--gray);font-size:.85rem">Belum ada riwayat presensi.</p>';return;
+    }
+    const fmt=(d)=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    const fmtTime=(d)=>new Date(d).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('riwayat-list').innerHTML=data.map(d=>`
+      <div class="riwayat-item">
+        <div><div class="riwayat-nama">${d.nama}</div><div class="riwayat-tanggal">📅 ${fmt(d.tanggal)}</div></div>
+        <div class="riwayat-waktu">⏰ ${fmtTime(d.waktu_presensi)}</div>
+      </div>`).join('');
+  }catch(e){document.getElementById('loading').style.display='none';}
+}
+async function presensi(){
+  const ok=document.getElementById('ok');
+  const err=document.getElementById('err');
+  ok.style.display=err.style.display='none';
+  const kode=document.getElementById('kode').value.trim().toUpperCase();
+  if(!kode){err.textContent='Masukkan kode presensi!';err.style.display='block';return;}
+  const btn=document.getElementById('btn-hadir');
+  btn.disabled=true;btn.textContent='Memproses...';
+  try{
+    const res=await fetch('/api/anggota/presensi',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({kode})});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error;err.style.display='block';}
+    else{ok.textContent='✅ Presensi berhasil untuk kegiatan: '+data.kegiatan;ok.style.display='block';document.getElementById('kode').value='';loadRiwayat();}
+  }catch(e){err.textContent='Gagal presensi.';err.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='✅ Konfirmasi Hadir';}
+}
+loadRiwayat();
+</script>
+</body>
+</html>

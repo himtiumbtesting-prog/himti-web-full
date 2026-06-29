@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpanjang Masa Aktif - HIMTI UMB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545;--warn:#ffc107}
+body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
+.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:var(--gray);font-size:.85rem}
+.nav-user span{color:var(--white);font-weight:600}
+.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:.2s}
+.btn-logout:hover{background:var(--danger);color:var(--white)}
+.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
+.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
+.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
+.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.main{max-width:800px;margin:0 auto;padding:28px 20px}
+.page-title{font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+.page-sub{color:var(--gray);font-size:.88rem;margin-bottom:24px}
+
+/* STATUS CARD */
+.status-card{background:var(--navy2);border-radius:14px;padding:24px;margin-bottom:24px;border:1px solid var(--navy3)}
+.status-card h3{color:var(--gold);font-size:1rem;margin-bottom:16px}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.9rem}
+.status-row:last-child{border-bottom:none}
+.status-label{color:var(--gray)}
+.status-val{font-weight:600}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700}
+.badge-aktif{background:rgba(40,167,69,.2);color:#5dd87a;border:1px solid var(--success)}
+.badge-kadaluarsa{background:rgba(220,53,69,.15);color:#f87184;border:1px solid var(--danger)}
+.badge-pending{background:rgba(255,193,7,.15);color:var(--warn);border:1px solid var(--warn)}
+
+/* FORM */
+.form-card{background:var(--navy2);border-radius:14px;padding:28px;margin-bottom:20px;border:1px solid var(--navy3)}
+.form-card h3{color:var(--gold);font-size:1rem;margin-bottom:6px}
+.form-card .form-sub{color:var(--gray);font-size:.83rem;margin-bottom:20px}
+.form-group{margin-bottom:18px}
+label{display:block;font-size:.85rem;color:var(--gray);margin-bottom:6px}
+input,textarea{width:100%;padding:10px 14px;background:var(--navy3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font-size:.9rem;outline:none;transition:.2s}
+input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
+input[type=file]{cursor:pointer;padding:8px}
+textarea{resize:vertical;min-height:80px}
+.btn{padding:11px 26px;border:none;border-radius:8px;font-weight:700;font-size:.95rem;cursor:pointer;transition:.2s}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-gold:disabled{opacity:.6;cursor:not-allowed}
+
+/* INFO BOX */
+.info-box{background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.3);border-radius:10px;padding:16px;margin-bottom:20px}
+.info-box h4{color:var(--gold);font-size:.9rem;margin-bottom:10px}
+.info-row{display:flex;justify-content:space-between;font-size:.88rem;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--gray)}
+.info-value{color:var(--white);font-weight:600}
+
+/* RIWAYAT */
+.riwayat-title{color:var(--gray);font-size:.9rem;font-weight:600;margin-bottom:12px}
+.riwayat-item{background:var(--navy3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,.05)}
+.riwayat-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.riwayat-date{color:var(--gray);font-size:.78rem}
+.riwayat-status{font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.rs-pending{background:rgba(255,193,7,.15);color:var(--warn)}
+.rs-approved{background:rgba(40,167,69,.2);color:#5dd87a}
+.rs-rejected{background:rgba(220,53,69,.15);color:#f87184}
+.riwayat-info{color:var(--gray);font-size:.82rem}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:14px;font-size:.88rem;display:none}
+.alert-success{background:rgba(40,167,69,.15);border:1px solid var(--success);color:#5dd87a}
+.alert-danger{background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
+.alert-warn{background:rgba(255,193,7,.1);border:1px solid var(--warn);color:var(--warn)}
+.spinner{width:26px;height:26px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:30px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<nav class="topnav">
+  <div class="nav-left">
+    <div class="logo-circle">H</div>
+    <span class="nav-brand">HIMTI UMB</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+    <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
+  </div>
+</nav>
+<div class="navmenu">
+  <a href="/anggota/dashboard.html">🏠 Beranda</a>
+  <a href="/anggota/profil.html">👤 Profil</a>
+  <a href="/anggota/cari-anggota.html">🔍 Cari Anggota</a>
+  <a href="/anggota/bayar-iuran.html">💳 Bayar Iuran</a>
+  <a href="/anggota/perpanjangan.html" class="active">🔄 Perpanjang</a>
+  <a href="/anggota/kartu-anggota.html">🪪 Kartu Anggota</a>
+  <a href="/anggota/presensi.html">📅 Presensi</a>
+</div>
+
+<div class="main">
+  <div class="page-title">🔄 Perpanjang Masa Aktif</div>
+  <p class="page-sub">Ajukan perpanjangan keanggotaan HIMTI UMB (masa aktif berlaku 2 tahun)</p>
+
+  <div id="loading"><div class="spinner"></div></div>
+  <div id="content" style="display:none">
+
+    <!-- STATUS KEANGGOTAAN -->
+    <div class="status-card">
+      <h3>📋 Status Keanggotaan Saat Ini</h3>
+      <div class="status-row">
+        <span class="status-label">Nama</span>
+        <span class="status-val" id="s-nama">-</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">NPM</span>
+        <span class="status-val" id="s-npm">-</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Status</span>
+        <span class="status-val" id="s-status">-</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Masa Aktif Mulai</span>
+        <span class="status-val" id="s-mulai">-</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Masa Aktif Sampai</span>
+        <span class="status-val" id="s-sampai">-</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Perpanjangan sampai</span>
+        <span class="status-val" id="s-baru" style="color:var(--gold)">Akan diperhitungkan saat disetujui</span>
+      </div>
+    </div>
+
+    <!-- ALERT AREA -->
+    <div class="alert alert-success" id="alert-ok"></div>
+    <div class="alert alert-danger" id="alert-err"></div>
+    <div class="alert alert-warn" id="alert-warn"></div>
+
+    <!-- INFO PEMBAYARAN -->
+    <div class="info-box">
+      <h4>💳 Info Pembayaran Perpanjangan</h4>
+      <div class="info-row">
+        <span class="info-label">Bank</span>
+        <span class="info-value" id="p-bank">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">No. Rekening</span>
+        <span class="info-value" id="p-norek">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Atas Nama</span>
+        <span class="info-value" id="p-atasnama">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Nominal</span>
+        <span class="info-value" id="p-nominal">-</span>
+      </div>
+    </div>
+
+    <!-- FORM PERPANJANGAN -->
+    <div class="form-card" id="form-section">
+      <h3>📤 Ajukan Perpanjangan</h3>
+      <p class="form-sub">Upload bukti pembayaran perpanjangan iuran, kemudian admin akan memproses dalam 1-3 hari kerja</p>
+      <div class="form-group">
+        <label>Bukti Pembayaran <span style="color:var(--gold)">*</span></label>
+        <input type="file" id="bukti" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Catatan (opsional)</label>
+        <textarea id="catatan" placeholder="Tuliskan catatan jika ada..."></textarea>
+      </div>
+      <button class="btn btn-gold" id="btn-kirim" onclick="kirim()">📤 Kirim Permohonan</button>
+    </div>
+
+    <!-- RIWAYAT -->
+    <div style="margin-top:24px">
+      <div class="riwayat-title">📜 Riwayat Permohonan</div>
+      <div id="riwayat-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('himti_token');
+if (!token || localStorage.getItem('himti_role') !== 'anggota') window.location.href = '/anggota/login.html';
+document.getElementById('nav-nama').textContent = localStorage.getItem('himti_nama') || '-';
+function logout(){ himtiLogout(); }
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+}
+
+async function load() {
+  try {
+    const [profil, riwayat, infoByr] = await Promise.all([
+      fetch('/api/anggota/profil', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()),
+      fetch('/api/perpanjangan/status', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()),
+      fetch('/api/info-pembayaran').then(r => r.json())
+    ]);
+
+    document.getElementById('s-nama').textContent = profil.nama;
+    document.getElementById('s-npm').textContent = profil.npm;
+    document.getElementById('s-mulai').textContent = fmtDate(profil.masa_aktif_mulai);
+    document.getElementById('s-sampai').textContent = fmtDate(profil.masa_aktif_sampai);
+
+    const s = profil.status;
+    let statusHtml = '';
+    if (s === 'aktif') statusHtml = '<span class="badge badge-aktif">✅ Aktif</span>';
+    else if (s === 'kadaluarsa') statusHtml = '<span class="badge badge-kadaluarsa">❌ Kadaluarsa</span>';
+    else if (s === 'pending') statusHtml = '<span class="badge badge-pending">⏳ Pending</span>';
+    document.getElementById('s-status').innerHTML = statusHtml;
+
+    // Hitung masa baru jika diperpanjang
+    if (profil.masa_aktif_sampai) {
+      const base = new Date(profil.masa_aktif_sampai) > new Date() ? new Date(profil.masa_aktif_sampai) : new Date();
+      base.setFullYear(base.getFullYear() + 2);
+      document.getElementById('s-baru').textContent = fmtDate(base.toISOString()) + ' (jika disetujui)';
+    }
+
+    // Info pembayaran
+    document.getElementById('p-bank').textContent = infoByr.nama_bank || '-';
+    document.getElementById('p-norek').textContent = infoByr.nomor_rekening || '-';
+    document.getElementById('p-atasnama').textContent = infoByr.atas_nama || '-';
+    document.getElementById('p-nominal').textContent = 'Rp ' + (infoByr.nominal_perpanjangan || 50000).toLocaleString('id-ID');
+
+    // Cek pending request
+    const pending = Array.isArray(riwayat) && riwayat.find(r => r.status === 'pending');
+    if (pending) {
+      document.getElementById('alert-warn').textContent = '⏳ Anda masih memiliki permohonan perpanjangan yang sedang diproses. Tunggu konfirmasi admin.';
+      document.getElementById('alert-warn').style.display = 'block';
+      document.getElementById('form-section').style.display = 'none';
+    }
+
+    if (s === 'pending') {
+      document.getElementById('alert-warn').textContent = '⚠️ Akun Anda masih dalam status pending. Perpanjangan hanya untuk anggota aktif/kadaluarsa.';
+      document.getElementById('alert-warn').style.display = 'block';
+      document.getElementById('form-section').style.display = 'none';
+    }
+
+    // Riwayat
+    if (Array.isArray(riwayat) && riwayat.length) {
+      const html = riwayat.map(r => {
+        const sc = r.status === 'pending' ? 'rs-pending' : r.status === 'approved' ? 'rs-approved' : 'rs-rejected';
+        const sl = r.status === 'pending' ? '⏳ Menunggu' : r.status === 'approved' ? '✅ Disetujui' : '❌ Ditolak';
+        return `<div class="riwayat-item">
+          <div class="riwayat-head">
+            <span class="riwayat-date">${fmtDate(r.requested_at)}</span>
+            <span class="riwayat-status ${sc}">${sl}</span>
+          </div>
+          <div class="riwayat-info">
+            Masa aktif lama: ${fmtDate(r.masa_aktif_lama)}
+            ${r.masa_aktif_baru ? ' → ' + fmtDate(r.masa_aktif_baru) : ''}
+            ${r.catatan_admin ? '<br>Catatan admin: <em>' + r.catatan_admin + '</em>' : ''}
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('riwayat-list').innerHTML = html;
+    } else {
+      document.getElementById('riwayat-list').innerHTML = '<p style="color:var(--gray);font-size:.85rem">Belum ada riwayat permohonan.</p>';
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').innerHTML = '<p style="color:var(--danger)">Gagal memuat data.</p>';
+    document.getElementById('content').style.display = 'block';
+  }
+}
+
+async function kirim() {
+  const ok = document.getElementById('alert-ok');
+  const err = document.getElementById('alert-err');
+  ok.style.display = err.style.display = 'none';
+  const bukti = document.getElementById('bukti').files[0];
+  if (!bukti) { err.textContent = 'Bukti pembayaran wajib diupload!'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('btn-kirim');
+  btn.disabled = true; btn.textContent = 'Mengirim...';
+  const fd = new FormData();
+  fd.append('bukti', bukti);
+  fd.append('catatan', document.getElementById('catatan').value);
+  try {
+    const res = await fetch('/api/perpanjangan/request', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; err.style.display = 'block'; }
+    else {
+      ok.textContent = '✅ ' + data.message;
+      ok.style.display = 'block';
+      document.getElementById('form-section').style.display = 'none';
+      setTimeout(load, 1500);
+    }
+  } catch (e) { err.textContent = 'Gagal mengirim. Coba lagi.'; err.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = '📤 Kirim Permohonan'; }
+}
+load();
+</script>
+</body>
+</html>
