@@ -3,237 +3,103 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cari Anggota - HIMTI UMB</title>
+<script src="/js/auth.js"></script>
+<link rel="stylesheet" href="/anggota/anggota.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545;--warn:#ffc107}
-body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
-.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.nav-left{display:flex;align-items:center;gap:12px}
-.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
-.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-user{color:var(--gray);font-size:.85rem}
-.nav-user span{color:var(--white);font-weight:600}
-.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:.2s}
-.btn-logout:hover{background:var(--danger);color:var(--white)}
-.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
-.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
-.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
-.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
-.main{max-width:960px;margin:0 auto;padding:28px 20px}
-.page-title{font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:6px}
-.page-sub{color:var(--gray);font-size:.88rem;margin-bottom:24px}
-
-/* SEARCH BOX */
-.search-card{background:var(--navy2);border-radius:14px;padding:24px;margin-bottom:24px;border:1px solid var(--navy3)}
-.search-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end}
-@media(max-width:700px){.search-row{grid-template-columns:1fr 1fr;}}
-@media(max-width:480px){.search-row{grid-template-columns:1fr;}}
-.form-group label{display:block;font-size:.8rem;color:var(--gray);margin-bottom:6px}
-input,select{width:100%;padding:10px 14px;background:var(--navy3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--white);font-size:.9rem;outline:none;transition:.2s}
-input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
-select option{background:var(--navy2)}
-.btn{padding:10px 22px;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;transition:.2s}
-.btn-gold{background:var(--gold);color:var(--navy)}
-.btn-gold:hover{background:var(--gold2)}
-.btn-outline{background:transparent;border:1px solid var(--navy3);color:var(--gray)}
-.btn-outline:hover{border-color:var(--gray)}
-
-/* RESULTS */
-.results-info{color:var(--gray);font-size:.85rem;margin-bottom:14px}
-.results-info span{color:var(--gold);font-weight:700}
-.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.member-card{background:var(--navy2);border:1px solid var(--navy3);border-radius:12px;padding:18px;transition:.2s;text-align:center}
-.member-card:hover{border-color:var(--gold);transform:translateY(-2px)}
-.member-avatar{width:56px;height:56px;border-radius:50%;background:var(--navy3);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 10px}
-.member-nama{font-weight:700;font-size:.95rem;margin-bottom:4px}
-.member-npm{color:var(--gold);font-size:.78rem;margin-bottom:6px;font-family:monospace}
-.member-prodi{color:var(--gray);font-size:.75rem;margin-bottom:8px}
-.member-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700}
-.badge-aktif{background:rgba(40,167,69,.2);color:#5dd87a;border:1px solid var(--success)}
-.badge-kadaluarsa{background:rgba(220,53,69,.15);color:#f87184;border:1px solid var(--danger)}
-.badge-nonaktif{background:rgba(160,174,192,.1);color:var(--gray);border:1px solid var(--gray)}
-.member-tahun{color:var(--gray);font-size:.72rem;margin-top:6px}
-.masa-aktif{color:var(--gray);font-size:.72rem;margin-top:4px}
-
-.empty-state{text-align:center;padding:60px 20px;color:var(--gray)}
-.empty-state .emoji{font-size:3rem;display:block;margin-bottom:12px}
-.spinner{width:30px;height:30px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
-@keyframes spin{to{transform:rotate(360deg)}}
+.search-box{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.search-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.member-list{display:flex;flex-direction:column;gap:10px}
+.member-item{background:#fff;border-radius:12px;padding:14px 16px;
+             border:1px solid #e2e8f0;display:flex;align-items:center;gap:12px}
+.member-avatar{width:44px;height:44px;border-radius:50%;background:#f1f5f9;
+               border:2px solid #c9a227;display:flex;align-items:center;justify-content:center;
+               font-size:1.3rem;flex-shrink:0}
+.member-nama{font-weight:700;font-size:.9rem;color:#1a202c}
+.member-npm{font-size:.75rem;color:#c9a227;font-family:monospace}
+.member-meta{font-size:.72rem;color:#8896a5;margin-top:2px}
+.result-info{font-size:.78rem;color:#8896a5;margin-bottom:10px;text-align:center}
+.result-info strong{color:#1a202c}
 </style>
 </head>
 <body>
-<script src="/js/auth.js"></script>
-<nav class="topnav">
-  <div class="nav-left">
-    <div class="logo-circle">H</div>
-    <span class="nav-brand">HIMTI UMB</span>
-  </div>
-  <div class="nav-right">
-    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+<div class="topbar">
+  <a href="/anggota/dashboard.html" class="brand">
+    <div class="brand-logo">H</div><span class="brand-name">HIMTI UMB</span>
+  </a>
+  <div class="topbar-right">
+    <span class="topbar-user">Halo, <strong id="nav-nama">-</strong></span>
     <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
   </div>
-</nav>
-<div class="navmenu">
-  <a href="/anggota/dashboard.html">🏠 Beranda</a>
-  <a href="/anggota/profil.html">👤 Profil</a>
-  <a href="/anggota/cari-anggota.html" class="active">🔍 Cari Anggota</a>
-  <a href="/anggota/bayar-iuran.html">💳 Bayar Iuran</a>
-  <a href="/anggota/perpanjangan.html">🔄 Perpanjang</a>
-  <a href="/anggota/kartu-anggota.html">🪪 Kartu Anggota</a>
-  <a href="/anggota/presensi.html">📅 Presensi</a>
 </div>
-
-<div class="main">
-  <div class="page-title">🔍 Cari Anggota</div>
-  <p class="page-sub">Temukan anggota HIMTI UMB berdasarkan nama, NPM, atau tahun bergabung</p>
-
-  <div class="search-card">
-    <div class="search-row">
-      <div class="form-group">
-        <label>Nama</label>
-        <input type="text" id="q" placeholder="Ketik nama..." onkeydown="if(event.key==='Enter')cari()">
-      </div>
-      <div class="form-group">
-        <label>NPM</label>
-        <input type="text" id="npm" placeholder="Nomor Pokok Mahasiswa" onkeydown="if(event.key==='Enter')cari()">
-      </div>
-      <div class="form-group">
-        <label>Tahun Bergabung</label>
-        <select id="tahun">
+<div class="backbar">
+  <a href="/anggota/dashboard.html" class="back-btn">← Kembali</a>
+  <span class="backbar-title">Cari Anggota</span>
+</div>
+<div class="page">
+  <div class="card">
+    <div class="search-box">
+      <input type="text" id="q" placeholder="🔍 Cari nama anggota..." oninput="debounceSearch()">
+      <div class="search-row">
+        <input type="text" id="npm" placeholder="NPM" oninput="debounceSearch()">
+        <select id="tahun" onchange="cari()">
           <option value="">Semua Tahun</option>
         </select>
       </div>
-      <div class="form-group" style="display:flex;gap:8px">
-        <button class="btn btn-gold" onclick="cari()">Cari</button>
-        <button class="btn btn-outline" onclick="reset()">Reset</button>
-      </div>
     </div>
+    <div id="result-info" class="result-info" style="display:none"></div>
+    <div id="loading-search" style="display:none;text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>
+    <div id="results"></div>
   </div>
-
-  <div id="results-info" class="results-info" style="display:none"></div>
-  <div id="loading" style="display:none"><div class="spinner"></div></div>
-  <div id="results"></div>
 </div>
-
 <script>
-const token = localStorage.getItem('himti_token');
-const role = localStorage.getItem('himti_role');
-if (!token || role !== 'anggota') window.location.href = '/anggota/login.html';
-document.getElementById('nav-nama').textContent = localStorage.getItem('himti_nama') || '-';
+const token=sessionStorage.getItem('himti_token');
+if(!token||sessionStorage.getItem('himti_role')!=='anggota')window.location.href='/anggota/login.html';
+document.getElementById('nav-nama').textContent=sessionStorage.getItem('himti_nama')||'-';
+const y=new Date().getFullYear();
+const sel=document.getElementById('tahun');
+for(let i=y;i>=2015;i--){const o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o);}
 
-function logout(){ himtiLogout(); }
+let timer;
+function debounceSearch(){clearTimeout(timer);timer=setTimeout(cari,400);}
 
-// Populate tahun options
-const currentYear = new Date().getFullYear();
-const select = document.getElementById('tahun');
-for (let y = currentYear; y >= 2015; y--) {
-  const opt = document.createElement('option');
-  opt.value = y; opt.textContent = y;
-  select.appendChild(opt);
+function fmtDate(d){return d?new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'-';}
+
+function badgeHtml(s){
+  const m={aktif:'badge-aktif ✅ Aktif',kadaluarsa:'badge-kadaluarsa ❌ Kadaluarsa',nonaktif:'badge-nonaktif ⛔ Nonaktif'};
+  const v=m[s]||('badge-nonaktif '+s);const[c,...rest]=v.split(' ');
+  return `<span class="badge ${c}">${rest.join(' ')}</span>`;
 }
 
-function fmtDate(d) {
-  if (!d) return '-';
-  return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
-}
-
-function badgeStatus(s) {
-  const map = {
-    aktif: ['badge-aktif', '✅ Aktif'],
-    kadaluarsa: ['badge-kadaluarsa', '❌ Kadaluarsa'],
-    nonaktif: ['badge-nonaktif', '⛔ Nonaktif']
-  };
-  const [cls, label] = map[s] || ['badge-nonaktif', s];
-  return `<span class="member-badge ${cls}">${label}</span>`;
-}
-
-async function cari() {
-  const q = document.getElementById('q').value.trim();
-  const npm = document.getElementById('npm').value.trim();
-  const tahun = document.getElementById('tahun').value;
-  if (!q && !npm && !tahun) {
-    document.getElementById('results').innerHTML = '<div class="empty-state"><span class="emoji">🔍</span><p>Masukkan minimal satu kriteria pencarian</p></div>';
-    document.getElementById('results-info').style.display = 'none';
-    return;
-  }
-
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('results').innerHTML = '';
-  document.getElementById('results-info').style.display = 'none';
-
-  const params = new URLSearchParams();
-  if (q) params.set('q', q);
-  if (npm) params.set('npm', npm);
-  if (tahun) params.set('tahun', tahun);
-
-  try {
-    const res = await fetch('/api/anggota/cari?' + params, { headers: { Authorization: 'Bearer ' + token } });
-    const data = await res.json();
-    document.getElementById('loading').style.display = 'none';
-
-    const info = document.getElementById('results-info');
-    info.innerHTML = `Ditemukan <span>${data.length}</span> anggota`;
-    info.style.display = 'block';
-
-    if (!data.length) {
-      document.getElementById('results').innerHTML = '<div class="empty-state"><span class="emoji">😕</span><p>Tidak ada anggota yang ditemukan</p></div>';
-      return;
-    }
-
-    const html = data.map(m => `
-      <div class="member-card">
+async function cari(){
+  const q=document.getElementById('q').value.trim();
+  const npm=document.getElementById('npm').value.trim();
+  const tahun=document.getElementById('tahun').value;
+  const params=new URLSearchParams();
+  if(q)params.set('q',q);if(npm)params.set('npm',npm);if(tahun)params.set('tahun',tahun);
+  document.getElementById('loading-search').style.display='block';
+  document.getElementById('results').innerHTML='';
+  document.getElementById('result-info').style.display='none';
+  try{
+    const res=await fetch('/api/anggota/cari?'+params,{headers:{Authorization:'Bearer '+token}});
+    const data=await res.json();
+    document.getElementById('loading-search').style.display='none';
+    const ri=document.getElementById('result-info');
+    ri.innerHTML=`Ditemukan <strong>${data.length}</strong> anggota`;
+    ri.style.display='block';
+    if(!data.length){document.getElementById('results').innerHTML='<div class="empty">😕 Tidak ada anggota yang ditemukan</div>';return;}
+    document.getElementById('results').innerHTML=`<div class="member-list">${data.map(m=>`
+      <div class="member-item">
         <div class="member-avatar">👤</div>
-        <div class="member-nama">${m.nama}</div>
-        <div class="member-npm">${m.npm}</div>
-        <div class="member-prodi">${m.prodi || '-'} · Angkatan ${m.angkatan || '-'}</div>
-        ${badgeStatus(m.status)}
-        <div class="member-tahun">Bergabung: ${m.tahun_bergabung || '-'}</div>
-        ${m.status === 'aktif' && m.masa_aktif_sampai ? `<div class="masa-aktif">Aktif s/d: ${fmtDate(m.masa_aktif_sampai)}</div>` : ''}
-      </div>
-    `).join('');
-    document.getElementById('results').innerHTML = `<div class="member-grid">${html}</div>`;
-  } catch (e) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('results').innerHTML = '<div class="empty-state"><span class="emoji">⚠️</span><p>Gagal memuat data. Coba lagi.</p></div>';
-  }
+        <div style="flex:1;min-width:0">
+          <div class="member-nama">${m.nama}</div>
+          <div class="member-npm">${m.npm}</div>
+          <div class="member-meta">${m.prodi||'-'} · Angkatan ${m.angkatan||'-'} · ${m.tahun_bergabung||'-'}</div>
+        </div>
+        ${badgeHtml(m.status)}
+      </div>`).join('')}</div>`;
+  }catch(e){document.getElementById('loading-search').style.display='none';}
 }
-
-function reset() {
-  document.getElementById('q').value = '';
-  document.getElementById('npm').value = '';
-  document.getElementById('tahun').value = '';
-  document.getElementById('results').innerHTML = '';
-  document.getElementById('results-info').style.display = 'none';
-}
-
-// Load semua anggota aktif saat buka halaman
-window.onload = async () => {
-  document.getElementById('loading').style.display = 'block';
-  try {
-    const res = await fetch('/api/anggota/cari?', { headers: { Authorization: 'Bearer ' + token } });
-    const data = await res.json();
-    document.getElementById('loading').style.display = 'none';
-    const info = document.getElementById('results-info');
-    info.innerHTML = `Total <span>${data.length}</span> anggota terdaftar`;
-    info.style.display = 'block';
-    if (!data.length) { document.getElementById('results').innerHTML = '<div class="empty-state"><span class="emoji">😕</span><p>Belum ada anggota terdaftar</p></div>'; return; }
-    const html = data.map(m => `
-      <div class="member-card">
-        <div class="member-avatar">👤</div>
-        <div class="member-nama">${m.nama}</div>
-        <div class="member-npm">${m.npm}</div>
-        <div class="member-prodi">${m.prodi || '-'} · Angkatan ${m.angkatan || '-'}</div>
-        ${badgeStatus(m.status)}
-        <div class="member-tahun">Bergabung: ${m.tahun_bergabung || '-'}</div>
-        ${m.status === 'aktif' && m.masa_aktif_sampai ? `<div class="masa-aktif">Aktif s/d: ${fmtDate(m.masa_aktif_sampai)}</div>` : ''}
-      </div>
-    `).join('');
-    document.getElementById('results').innerHTML = `<div class="member-grid">${html}</div>`;
-  } catch (e) {
-    document.getElementById('loading').style.display = 'none';
-  }
-};
+cari();
 </script>
 </body>
 </html>

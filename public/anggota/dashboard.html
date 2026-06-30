@@ -2,269 +2,276 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Anggota - HIMTI UMB</title>
+<title>Dashboard - HIMTI UMB</title>
+<script src="/js/auth.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--success:#28a745;--danger:#dc3545;--warn:#ffc107}
-body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+:root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;
+      --white:#fff;--gray:#8896a5;--success:#22c55e;--danger:#ef4444;--warn:#f59e0b}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
 
-/* TOP NAV */
-.topnav{background:var(--navy2);border-bottom:2px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.nav-left{display:flex;align-items:center;gap:12px}
-.logo-circle{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
-.nav-brand{font-weight:800;font-size:1.1rem;color:var(--gold)}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-user{color:var(--gray);font-size:.85rem}
-.nav-user span{color:var(--white);font-weight:600}
-.btn-logout{background:transparent;border:1px solid rgba(220,53,69,.5);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:.2s}
-.btn-logout:hover{background:var(--danger);color:var(--white)}
+/* ── TOP BAR ── */
+.topbar{background:var(--navy2);padding:0 20px;height:56px;display:flex;align-items:center;
+        justify-content:space-between;position:sticky;top:0;z-index:100;
+        border-bottom:2px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:34px;height:34px;background:var(--gold);border-radius:50%;display:flex;
+            align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
+.brand-name{font-weight:800;font-size:1rem;color:var(--gold)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-user{font-size:.82rem;color:#94a3b8}
+.topbar-user strong{color:var(--white)}
+.btn-logout{background:transparent;border:1px solid rgba(239,68,68,.4);color:#ef4444;
+            padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;transition:.2s}
+.btn-logout:hover{background:#ef4444;color:#fff}
 
-/* NAV MENU (horizontal) */
-.navmenu{background:var(--navy3);padding:0 24px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.05)}
-.navmenu a{color:var(--gray);text-decoration:none;padding:12px 16px;font-size:.85rem;white-space:nowrap;transition:.2s;border-bottom:2px solid transparent}
-.navmenu a:hover{color:var(--white);border-bottom-color:var(--gold)}
-.navmenu a.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+/* ── LAYOUT ── */
+.page{max-width:520px;margin:0 auto;padding:20px 16px 40px}
 
-/* MAIN */
-.main{max-width:960px;margin:0 auto;padding:28px 20px}
+/* ── PROFILE CARD ── */
+.profile-card{background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;
+              box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;align-items:center;gap:16px}
+.profile-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;
+              border:3px solid var(--gold);background:#e2e8f0;flex-shrink:0;
+              display:flex;align-items:center;justify-content:center;font-size:2rem;color:#94a3b8}
+.profile-foto img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.profile-info h2{font-size:1.05rem;font-weight:700;color:#1a202c;margin-bottom:3px}
+.profile-npm{font-size:.78rem;color:var(--gold);font-family:monospace;font-weight:600;margin-bottom:6px}
+.profile-prodi{font-size:.76rem;color:var(--gray);margin-bottom:8px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;
+             font-size:.76rem;font-weight:700}
+.pill-aktif{background:#dcfce7;color:#16a34a;border:1px solid #86efac}
+.pill-pending{background:#fef9c3;color:#854d0e;border:1px solid #fde047}
+.pill-kadaluarsa{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
+.pill-nonaktif{background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1}
 
-/* WELCOME CARD */
-.welcome-card{background:linear-gradient(135deg,var(--navy2),var(--navy3));border:1px solid rgba(201,162,39,.4);border-radius:16px;padding:28px;display:flex;gap:20px;align-items:center;margin-bottom:24px;position:relative;overflow:hidden}
-.welcome-card::before{content:'HIMTI';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:5rem;font-weight:900;color:rgba(201,162,39,.06);pointer-events:none}
-.member-foto{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);background:var(--navy3);flex-shrink:0}
-.member-foto-placeholder{width:80px;height:80px;border-radius:50%;background:var(--navy3);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
-.welcome-info h2{font-size:1.35rem;font-weight:800;margin-bottom:4px}
-.welcome-info .npm-text{color:var(--gold);font-size:.85rem;margin-bottom:8px}
-.welcome-info .prodi-text{color:var(--gray);font-size:.82rem}
-.status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:.82rem;font-weight:700;margin-top:10px}
-.status-aktif{background:rgba(40,167,69,.2);color:#5dd87a;border:1px solid var(--success)}
-.status-pending{background:rgba(255,193,7,.15);color:var(--warn);border:1px solid var(--warn)}
-.status-kadaluarsa{background:rgba(220,53,69,.15);color:#f87184;border:1px solid var(--danger)}
-.status-nonaktif{background:rgba(160,174,192,.1);color:var(--gray);border:1px solid var(--gray)}
+/* ── MASA AKTIF CARD ── */
+.masa-card{background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:16px;
+           box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;align-items:center;
+           justify-content:space-between;border-left:4px solid var(--gold)}
+.masa-label{font-size:.76rem;color:var(--gray);margin-bottom:3px}
+.masa-val{font-size:.92rem;font-weight:700;color:#1a202c}
+.masa-icon{font-size:2rem;opacity:.6}
+.masa-warn{border-left-color:var(--danger)}
+.masa-warn .masa-val{color:var(--danger)}
 
-/* STATUS CARD */
-.status-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-@media(max-width:600px){.status-section{grid-template-columns:1fr}}
-.stat-card{background:var(--navy2);border-radius:12px;padding:20px;border:1px solid var(--navy3);text-align:center}
-.stat-card .stat-icon{font-size:2rem;margin-bottom:8px}
-.stat-card .stat-label{color:var(--gray);font-size:.78rem;margin-bottom:6px}
-.stat-card .stat-value{font-size:1.1rem;font-weight:700;color:var(--white)}
-.stat-card .stat-value.gold{color:var(--gold)}
-.stat-card .stat-value.red{color:var(--danger)}
-.stat-card .stat-value.green{color:var(--success)}
+/* ── ALERT BOX ── */
+.alert-box{border-radius:10px;padding:12px 14px;font-size:.83rem;margin-bottom:14px;display:none;line-height:1.5}
+.alert-warn{background:#fef9c3;border:1px solid #fde047;color:#854d0e}
+.alert-danger{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
+.alert-info{background:#e0f2fe;border:1px solid #7dd3fc;color:#0369a1}
+.alert-box a{font-weight:700;color:inherit}
 
-/* QUICK ACTIONS */
-.section-title{font-size:1rem;font-weight:700;color:var(--gray);margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
-.actions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
-.action-card{background:var(--navy2);border:1px solid var(--navy3);border-radius:12px;padding:20px 16px;text-align:center;text-decoration:none;color:var(--white);cursor:pointer;transition:.2s}
-.action-card:hover{border-color:var(--gold);background:var(--navy3);transform:translateY(-2px)}
-.action-card .ac-icon{font-size:2rem;margin-bottom:10px;display:block}
-.action-card .ac-label{font-size:.82rem;color:var(--gray);font-weight:500}
+/* ── MENU GRID ── */
+.menu-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+            color:var(--gray);margin-bottom:10px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.menu-card{background:#fff;border-radius:12px;padding:18px 14px;text-align:center;
+           text-decoration:none;color:#1a202c;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.07);
+           border:1px solid #e2e8f0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.menu-card:hover{border-color:var(--gold);box-shadow:0 3px 10px rgba(201,162,39,.2);
+                 transform:translateY(-2px)}
+.menu-card:active{transform:translateY(0)}
+.menu-icon{font-size:1.8rem;line-height:1}
+.menu-label{font-size:.82rem;font-weight:600;color:#374151}
+.menu-desc{font-size:.7rem;color:var(--gray);margin-top:1px}
 
-/* ALERT */
-.msg-box{padding:14px 18px;border-radius:10px;margin-bottom:16px;font-size:.88rem;display:none}
-.msg-box.warning{background:rgba(255,193,7,.1);border:1px solid var(--warn);color:var(--warn)}
-.msg-box.info{background:rgba(201,162,39,.1);border:1px solid var(--gold);color:var(--gold)}
+/* ── KONTAK CARD ── */
+.kontak-card{background:var(--navy2);border-radius:14px;padding:18px 20px;
+             display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.kontak-info .kontak-label{font-size:.72rem;color:#64748b;margin-bottom:2px}
+.kontak-info .kontak-val{font-size:.88rem;font-weight:600;color:#fff}
+.wa-btn{background:#22c55e;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;
+        font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:6px;transition:.2s}
+.wa-btn:hover{background:#16a34a}
 
-/* KONTAK BOX */
-.kontak-box{background:var(--navy2);border-radius:12px;padding:20px;border:1px solid rgba(201,162,39,.25);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.kontak-box .wa-btn{background:var(--success);color:var(--white);padding:8px 18px;border-radius:8px;text-decoration:none;font-weight:600;font-size:.88rem;transition:.2s}
-.kontak-box .wa-btn:hover{opacity:.9}
-.kontak-box .kontak-info{color:var(--gray);font-size:.85rem}
-.kontak-box .kontak-info strong{color:var(--white)}
-
-.spinner{width:30px;height:30px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+/* ── SPINNER ── */
+.spinner-wrap{display:flex;justify-content:center;align-items:center;min-height:60vh}
+.spinner{width:32px;height:32px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);
+         border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<script src="/js/auth.js"></script>
-<nav class="topnav">
-  <div class="nav-left">
-    <div class="logo-circle">H</div>
-    <span class="nav-brand">HIMTI UMB</span>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">H</div>
+    <span class="brand-name">HIMTI UMB</span>
   </div>
-  <div class="nav-right">
-    <span class="nav-user">Halo, <span id="nav-nama">-</span></span>
+  <div class="topbar-right">
+    <span class="topbar-user">Halo, <strong id="nav-nama">-</strong></span>
     <button class="btn-logout" onclick="himtiLogout()">Keluar</button>
   </div>
-</nav>
-
-<div class="navmenu">
-  <a href="/anggota/dashboard.html" class="active">🏠 Beranda</a>
-  <a href="/anggota/profil.html">👤 Profil</a>
-  <a href="/anggota/cari-anggota.html">🔍 Cari Anggota</a>
-  <a href="/anggota/bayar-iuran.html">💳 Bayar Iuran</a>
-  <a href="/anggota/perpanjangan.html">🔄 Perpanjang</a>
-  <a href="/anggota/kartu-anggota.html">🪪 Kartu Anggota</a>
-  <a href="/anggota/presensi.html">📅 Presensi</a>
 </div>
 
-<div class="main">
-  <div id="loading"><div class="spinner"></div></div>
-  <div id="content" style="display:none">
+<!-- LOADING -->
+<div class="spinner-wrap" id="loading"><div class="spinner"></div></div>
 
-    <!-- PERINGATAN MASA AKTIF -->
-    <div class="msg-box warning" id="warn-masa-aktif">
-      ⚠️ Masa aktif keanggotaan Anda akan segera berakhir!
-      <a href="/anggota/perpanjangan.html" style="color:var(--gold);margin-left:8px;font-weight:600">Perpanjang sekarang →</a>
-    </div>
-    <div class="msg-box" id="msg-kadaluarsa" style="background:rgba(220,53,69,.1);border:1px solid var(--danger);color:#f87184">
-      ❌ Masa aktif keanggotaan Anda sudah habis. Segera ajukan perpanjangan.
-      <a href="/anggota/perpanjangan.html" style="color:var(--gold);margin-left:8px;font-weight:600">Perpanjang →</a>
-    </div>
-    <div class="msg-box info" id="msg-pending">
-      ⏳ Akun Anda sedang menunggu aktivasi admin. Pastikan sudah upload bukti pembayaran.
-      <a href="/anggota/bayar-iuran.html" style="color:var(--gold);margin-left:8px;font-weight:600">Upload bukti →</a>
-    </div>
+<!-- CONTENT -->
+<div class="page" id="content" style="display:none">
 
-    <!-- WELCOME -->
-    <div class="welcome-card">
-      <div id="foto-wrapper"><div class="member-foto-placeholder">👤</div></div>
-      <div class="welcome-info">
-        <h2 id="member-nama">-</h2>
-        <div class="npm-text" id="member-npm">NPM: -</div>
-        <div class="prodi-text" id="member-prodi">-</div>
-        <div class="status-badge status-pending" id="member-status">⏳ Pending</div>
-      </div>
-    </div>
+  <!-- ALERTS -->
+  <div class="alert-box alert-danger" id="alert-kadaluarsa">
+    ❌ Masa aktif keanggotaan kamu sudah habis.
+    <a href="/anggota/perpanjangan.html"> Perpanjang sekarang →</a>
+  </div>
+  <div class="alert-box alert-warn" id="alert-hampir">
+    ⏳ Masa aktif kamu akan segera berakhir!
+    <a href="/anggota/perpanjangan.html"> Perpanjang sekarang →</a>
+  </div>
+  <div class="alert-box alert-info" id="alert-pending">
+    ⏳ Akun menunggu aktivasi admin.
+    <a href="/anggota/bayar-iuran.html"> Upload bukti bayar →</a>
+  </div>
 
-    <!-- STATUS MASA AKTIF -->
-    <div class="status-section">
-      <div class="stat-card">
-        <div class="stat-icon">📆</div>
-        <div class="stat-label">Masa Aktif Mulai</div>
-        <div class="stat-value" id="val-mulai">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">⏰</div>
-        <div class="stat-label">Masa Aktif Sampai</div>
-        <div class="stat-value" id="val-sampai">-</div>
-      </div>
+  <!-- PROFILE CARD -->
+  <div class="profile-card">
+    <div class="profile-foto" id="foto-el">👤</div>
+    <div class="profile-info">
+      <h2 id="p-nama">-</h2>
+      <div class="profile-npm" id="p-npm">-</div>
+      <div class="profile-prodi" id="p-prodi">-</div>
+      <span class="status-pill pill-pending" id="p-status">⏳ Pending</span>
     </div>
+  </div>
 
-    <!-- QUICK ACTIONS -->
-    <div class="section-title">Menu Utama</div>
-    <div class="actions-grid">
-      <a href="/anggota/profil.html" class="action-card">
-        <span class="ac-icon">👤</span>
-        <span class="ac-label">Profil Saya</span>
-      </a>
-      <a href="/anggota/cari-anggota.html" class="action-card">
-        <span class="ac-icon">🔍</span>
-        <span class="ac-label">Cari Anggota</span>
-      </a>
-      <a href="/anggota/bayar-iuran.html" class="action-card">
-        <span class="ac-icon">💳</span>
-        <span class="ac-label">Bayar Iuran</span>
-      </a>
-      <a href="/anggota/perpanjangan.html" class="action-card">
-        <span class="ac-icon">🔄</span>
-        <span class="ac-label">Perpanjang</span>
-      </a>
-      <a href="/anggota/kartu-anggota.html" class="action-card">
-        <span class="ac-icon">🪪</span>
-        <span class="ac-label">Kartu Anggota</span>
-      </a>
-      <a href="/anggota/presensi.html" class="action-card">
-        <span class="ac-icon">📅</span>
-        <span class="ac-label">Presensi</span>
-      </a>
+  <!-- MASA AKTIF CARD -->
+  <div class="masa-card" id="masa-card">
+    <div>
+      <div class="masa-label">Masa Aktif Keanggotaan</div>
+      <div class="masa-val" id="masa-val">-</div>
     </div>
+    <div class="masa-icon">📅</div>
+  </div>
 
-    <!-- KONTAK HIMTI -->
-    <div class="section-title">Hubungi HIMTI</div>
-    <div class="kontak-box">
-      <div class="kontak-info">
-        <strong>Admin HIMTI UMB</strong><br>
-        <span id="kontak-wa">WhatsApp: -</span>
-      </div>
-      <a id="wa-btn" href="#" class="wa-btn" target="_blank">💬 Chat WhatsApp</a>
+  <!-- MENU -->
+  <div class="menu-title">Menu</div>
+  <div class="menu-grid">
+    <a href="/anggota/profil.html" class="menu-card">
+      <span class="menu-icon">👤</span>
+      <span class="menu-label">Profil Saya</span>
+    </a>
+    <a href="/anggota/cari-anggota.html" class="menu-card">
+      <span class="menu-icon">🔍</span>
+      <span class="menu-label">Cari Anggota</span>
+    </a>
+    <a href="/anggota/bayar-iuran.html" class="menu-card">
+      <span class="menu-icon">💳</span>
+      <span class="menu-label">Bayar Iuran</span>
+    </a>
+    <a href="/anggota/perpanjangan.html" class="menu-card">
+      <span class="menu-icon">🔄</span>
+      <span class="menu-label">Perpanjang</span>
+    </a>
+    <a href="/anggota/kartu-anggota.html" class="menu-card">
+      <span class="menu-icon">🪪</span>
+      <span class="menu-label">Kartu Anggota</span>
+    </a>
+    <a href="/anggota/presensi.html" class="menu-card">
+      <span class="menu-icon">📅</span>
+      <span class="menu-label">Presensi</span>
+    </a>
+  </div>
+
+  <!-- KONTAK -->
+  <div class="kontak-card">
+    <div class="kontak-info">
+      <div class="kontak-label">Hubungi Admin HIMTI</div>
+      <div class="kontak-val" id="k-wa">-</div>
     </div>
+    <a href="#" class="wa-btn" id="k-btn" target="_blank">
+      💬 WhatsApp
+    </a>
   </div>
 </div>
 
 <script>
-const token = localStorage.getItem('himti_token');
-const role = localStorage.getItem('himti_role');
-if (!token || role !== 'anggota') { window.location.href = '/anggota/login.html'; }
-
-document.getElementById('nav-nama').textContent = localStorage.getItem('himti_nama') || '-';
-
-function logout(){ himtiLogout(); }
+const token = sessionStorage.getItem('himti_token');
+if (!token || sessionStorage.getItem('himti_role') !== 'anggota') {
+  window.location.href = '/anggota/login.html';
+}
+document.getElementById('nav-nama').textContent = sessionStorage.getItem('himti_nama') || '-';
 
 function fmtDate(d) {
   if (!d) return '-';
   return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 }
-
 function daysDiff(d) {
   if (!d) return null;
   return Math.ceil((new Date(d) - new Date()) / 86400000);
 }
 
-async function loadDashboard() {
+async function load() {
   try {
     const [profil, kontak] = await Promise.all([
-      fetch('/api/anggota/profil', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()),
-      fetch('/api/kontak').then(r => r.json())
+      fetch('/api/anggota/profil', { headers:{ Authorization:'Bearer '+token }}).then(r=>r.json()),
+      fetch('/api/kontak').then(r=>r.json())
     ]);
+    if (profil.error) return;
 
-    if (profil.error) { logout(); return; }
-
-    document.getElementById('member-nama').textContent = profil.nama;
-    document.getElementById('member-npm').textContent = 'NPM: ' + profil.npm;
-    document.getElementById('member-prodi').textContent = (profil.prodi || '') + (profil.angkatan ? ' · Angkatan ' + profil.angkatan : '');
-    localStorage.setItem('himti_nama', profil.nama);
+    // Nama & info
+    document.getElementById('p-nama').textContent = profil.nama;
+    document.getElementById('p-npm').textContent = 'NPM: ' + profil.npm;
+    document.getElementById('p-prodi').textContent = [profil.prodi, profil.angkatan ? 'Angkatan '+profil.angkatan : ''].filter(Boolean).join(' · ');
+    sessionStorage.setItem('himti_nama', profil.nama);
     document.getElementById('nav-nama').textContent = profil.nama;
 
     // Foto
     if (profil.foto_url) {
-      document.getElementById('foto-wrapper').innerHTML = `<img src="${profil.foto_url}" class="member-foto" alt="foto">`;
+      document.getElementById('foto-el').innerHTML = `<img src="${profil.foto_url}" alt="foto">`;
     }
 
-    // Status badge
-    const sb = document.getElementById('member-status');
+    // Status pill
     const s = profil.status;
-    sb.className = 'status-badge status-' + s;
-    sb.textContent = s === 'aktif' ? '✅ Aktif' : s === 'pending' ? '⏳ Pending' : s === 'kadaluarsa' ? '❌ Kadaluarsa' : '⛔ Nonaktif';
+    const sp = document.getElementById('p-status');
+    const pillMap = {
+      aktif:     ['pill-aktif',     '✅ Aktif'],
+      pending:   ['pill-pending',   '⏳ Menunggu Aktivasi'],
+      kadaluarsa:['pill-kadaluarsa','❌ Kadaluarsa'],
+      nonaktif:  ['pill-nonaktif',  '⛔ Nonaktif']
+    };
+    const [pc, pl] = pillMap[s] || ['pill-nonaktif', s];
+    sp.className = 'status-pill ' + pc;
+    sp.textContent = pl;
 
-    // Masa aktif
-    document.getElementById('val-mulai').textContent = fmtDate(profil.masa_aktif_mulai);
-    const sampai = profil.masa_aktif_sampai;
-    const sampaiEl = document.getElementById('val-sampai');
-    sampaiEl.textContent = fmtDate(sampai);
-
+    // Masa aktif card
+    const masaCard = document.getElementById('masa-card');
+    const masaVal = document.getElementById('masa-val');
     if (s === 'pending') {
-      document.getElementById('msg-pending').style.display = 'block';
-      sampaiEl.textContent = 'Belum aktif';
-      sampaiEl.classList.add('gold');
-    } else if (s === 'kadaluarsa') {
-      document.getElementById('msg-kadaluarsa').style.display = 'block';
-      sampaiEl.classList.add('red');
-    } else if (s === 'aktif' && sampai) {
-      const days = daysDiff(sampai);
-      if (days <= 30 && days > 0) {
-        document.getElementById('warn-masa-aktif').style.display = 'block';
-        sampaiEl.classList.add('red');
-      } else {
-        sampaiEl.classList.add('green');
+      masaVal.textContent = 'Belum aktif — tunggu konfirmasi admin';
+    } else if (profil.masa_aktif_sampai) {
+      const days = daysDiff(profil.masa_aktif_sampai);
+      masaVal.textContent = 'Sampai ' + fmtDate(profil.masa_aktif_sampai);
+      if (days !== null && days <= 0) {
+        masaCard.classList.add('masa-warn');
+        document.getElementById('alert-kadaluarsa').style.display = 'block';
+      } else if (days !== null && days <= 30) {
+        masaCard.classList.add('masa-warn');
+        document.getElementById('alert-hampir').innerHTML =
+          `⏳ Masa aktif berakhir dalam <strong>${days} hari</strong>. <a href="/anggota/perpanjangan.html"> Perpanjang →</a>`;
+        document.getElementById('alert-hampir').style.display = 'block';
       }
+    } else {
+      masaVal.textContent = '-';
     }
+
+    if (s === 'pending') document.getElementById('alert-pending').style.display = 'block';
 
     // Kontak
     if (kontak.nomor_wa) {
-      document.getElementById('kontak-wa').textContent = 'WhatsApp: ' + kontak.nomor_wa;
-      document.getElementById('wa-btn').href = 'https://wa.me/' + kontak.nomor_wa.replace(/[^0-9]/g, '');
+      document.getElementById('k-wa').textContent = kontak.nomor_wa;
+      document.getElementById('k-btn').href = 'https://wa.me/' + kontak.nomor_wa.replace(/\D/g,'');
     }
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
   } catch (e) {
-    alert('Gagal memuat data. Silakan refresh.');
+    document.getElementById('loading').innerHTML =
+      '<p style="color:#ef4444;text-align:center">Gagal memuat. <a href="" style="color:#c9a227">Refresh</a></p>';
   }
 }
-loadDashboard();
+load();
 </script>
 </body>
 </html>

@@ -69,6 +69,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
   #kartu-wrapper{max-width:100%}
 }
 </style>
+<link rel="stylesheet" href="/anggota/anggota.css">
 </head>
 <body>
 <script src="/js/auth.js"></script>
@@ -138,9 +139,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
 </div>
 
 <script>
-const token = localStorage.getItem('himti_token');
-if (!token || localStorage.getItem('himti_role') !== 'anggota') window.location.href = '/anggota/login.html';
-document.getElementById('nav-nama').textContent = localStorage.getItem('himti_nama') || '-';
+const token = sessionStorage.getItem('himti_token');
+if (!token || sessionStorage.getItem('himti_role') !== 'anggota') window.location.href = '/anggota/login.html';
+document.getElementById('nav-nama').textContent = sessionStorage.getItem('himti_nama') || '-';
 function logout(){ himtiLogout(); }
 
 function fmtDate(d) {

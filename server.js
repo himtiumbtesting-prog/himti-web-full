@@ -232,7 +232,7 @@ async function initDB() {
 const generateToken = (payload) => jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' });
 const generateSessionToken = () => crypto.randomBytes(32).toString('hex');
 
-// verifyToken: cek JWT + pastikan sesi masih valid di DB (single session)
+// verifyToken: cek JWT + pastikan sesi masih valid di DB (single session enforcement)
 async function verifyToken(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
@@ -242,23 +242,36 @@ async function verifyToken(req, res, next) {
     const decoded = jwt.verify(auth.split(' ')[1], JWT_SECRET);
     req.user = decoded;
 
-    // Cek session_token di DB → jika tidak cocok berarti sudah login di perangkat lain
-    const r = await pool.query('SELECT session_token, is_active FROM users WHERE id=$1', [decoded.id]);
+    // Wajib punya session_token (token lama sebelum v2.1 tidak valid)
+    if (!decoded.session_token) {
+      return res.status(401).json({
+        error: 'Sesi kadaluarsa, silakan login ulang.',
+        code: 'SESSION_INVALID'
+      });
+    }
+
+    // Cek ke database: pastikan session_token cocok
+    const r = await pool.query(
+      'SELECT session_token, is_active FROM users WHERE id=$1', [decoded.id]
+    );
     if (!r.rows.length) {
       return res.status(401).json({ error: 'Akun tidak ditemukan', code: 'SESSION_INVALID' });
     }
     const dbUser = r.rows[0];
-    // Cek akun aktif (kecuali superadmin)
+
+    // Cek akun aktif
     if (!dbUser.is_active && decoded.role !== 'superadmin') {
       return res.status(403).json({ error: 'Akun dinonaktifkan', code: 'ACCOUNT_DISABLED' });
     }
-    // Cek sesi: jika session_token di JWT ≠ di DB → berarti sudah login di perangkat lain
-    if (decoded.session_token && dbUser.session_token !== decoded.session_token) {
+
+    // Cek session: token tidak cocok = ada orang lain yang login pakai akun ini
+    if (dbUser.session_token !== decoded.session_token) {
       return res.status(401).json({
         error: 'Sesi berakhir. Akun ini baru saja login di perangkat lain.',
         code: 'SESSION_INVALID'
       });
     }
+
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Token tidak valid atau sudah kadaluarsa', code: 'TOKEN_INVALID' });
@@ -933,4 +946,17 @@ app.get('/api/setup', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Beacon logout (dipanggil saat tab/browser ditutup via navigator.sendBeacon)
+app.post('/api/auth/logout-beacon', async (req, res) => {
+  try {
+    const body = req.body;
+    const token = body?.token;
+    if (token) {
+      const decoded = require('jsonwebtoken').verify(token, JWT_SECRET);
+      await pool.query('UPDATE users SET session_token=NULL WHERE id=$1', [decoded.id]);
+    }
+  } catch (e) { /* abaikan error */ }
+  res.status(200).end();
 });

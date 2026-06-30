@@ -53,7 +53,7 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
   </div>
 </div>
 <script>
-if(localStorage.getItem('himti_token') && localStorage.getItem('himti_role')==='anggota')
+if(sessionStorage.getItem('himti_token') && sessionStorage.getItem('himti_role')==='anggota')
   window.location.href='/anggota/dashboard.html';
 async function login(){
   const btn=document.getElementById('btn-login');
@@ -68,9 +68,9 @@ async function login(){
     const data=await res.json();
     if(!res.ok){err.textContent=data.error;err.style.display='block';}
     else{
-      localStorage.setItem('himti_token',data.token);
-      localStorage.setItem('himti_role','anggota');
-      localStorage.setItem('himti_nama',data.nama);
+      sessionStorage.setItem('himti_token',data.token);
+      sessionStorage.setItem('himti_role','anggota');
+      sessionStorage.setItem('himti_nama',data.nama);
       window.location.href='/anggota/dashboard.html';
     }
   }catch(e){err.textContent='Gagal terhubung ke server';err.style.display='block';}

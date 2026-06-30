@@ -40,6 +40,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
 .spinner{width:26px;height:26px;border:3px solid rgba(201,162,39,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
+<link rel="stylesheet" href="/anggota/anggota.css">
 </head>
 <body>
 <script src="/js/auth.js"></script>
@@ -79,9 +80,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
   </div>
 </div>
 <script>
-const token=localStorage.getItem('himti_token');
-if(!token||localStorage.getItem('himti_role')!=='anggota')window.location.href='/anggota/login.html';
-document.getElementById('nav-nama').textContent=localStorage.getItem('himti_nama')||'-';
+const token=sessionStorage.getItem('himti_token');
+if(!token||sessionStorage.getItem('himti_role')!=='anggota')window.location.href='/anggota/login.html';
+document.getElementById('nav-nama').textContent=sessionStorage.getItem('himti_nama')||'-';
 function logout(){ himtiLogout(); }
 async function loadRiwayat(){
   try{

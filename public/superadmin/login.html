@@ -51,7 +51,7 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
   <div class="links"><a href="/admin/login.html">Login sebagai Admin biasa</a></div>
 </div>
 <script>
-if(localStorage.getItem('himti_token')&&localStorage.getItem('himti_role')==='superadmin')
+if(sessionStorage.getItem('himti_token')&&sessionStorage.getItem('himti_role')==='superadmin')
   window.location.href='/superadmin/dashboard.html';
 async function login(){
   const btn=document.getElementById('btn-login');
@@ -66,9 +66,9 @@ async function login(){
     const data=await res.json();
     if(!res.ok){err.textContent=data.error;err.style.display='block';}
     else{
-      localStorage.setItem('himti_token',data.token);
-      localStorage.setItem('himti_role','superadmin');
-      localStorage.setItem('himti_nama','Super Admin');
+      sessionStorage.setItem('himti_token',data.token);
+      sessionStorage.setItem('himti_role','superadmin');
+      sessionStorage.setItem('himti_nama','Super Admin');
       window.location.href='/superadmin/dashboard.html';
     }
   }catch(e){err.textContent='Gagal terhubung ke server';err.style.display='block';}

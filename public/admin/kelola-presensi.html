@@ -90,10 +90,10 @@
 </div>
 
 <script>
-const token = localStorage.getItem('himti_token');
-const role = localStorage.getItem('himti_role');
+const token = sessionStorage.getItem('himti_token');
+const role = sessionStorage.getItem('himti_role');
 if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
-document.getElementById('admin-nama').textContent = localStorage.getItem('himti_nama') || 'Admin';
+document.getElementById('admin-nama').textContent = sessionStorage.getItem('himti_nama') || 'Admin';
 function logout(){ himtiLogout(); }
 
 // Set default tanggal ke hari ini

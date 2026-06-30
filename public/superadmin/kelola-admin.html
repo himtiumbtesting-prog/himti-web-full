@@ -100,8 +100,8 @@
 </div>
 
 <script>
-const token = localStorage.getItem('himti_token');
-const role = localStorage.getItem('himti_role');
+const token = sessionStorage.getItem('himti_token');
+const role = sessionStorage.getItem('himti_role');
 if (!token || role !== 'superadmin') window.location.href = '/superadmin/login.html';
 
 function logout(){ himtiLogout(); }
