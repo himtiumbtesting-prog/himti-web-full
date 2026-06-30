@@ -1,5 +1,8 @@
+
+
 1. Install git terlebih dahulu
 -setelah install git klik kanan di folder nya klik 'git bass'
+tapi harus instal dulu ke githubnya
 -setelah itu masukan code gitnya yang terhubung ke githubnya
  -git push origin main
  -git add .
