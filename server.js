@@ -971,7 +971,33 @@ app.get('/api/setup', async (req, res) => {
   if (req.query.key !== 'HIMTI2025SETUP') return res.status(403).json({ error: 'Key tidak valid' });
   try {
     await initDB();
-    res.json({ success: true, message: 'Database berhasil diinisialisasi ulang' });
+    const cols = await pool.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name='anggota' ORDER BY column_name`
+    );
+    res.json({
+      success: true,
+      message: 'Database berhasil diinisialisasi ulang',
+      kolom_anggota_sekarang: cols.rows.map(r => r.column_name)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cek struktur tabel apa adanya (diagnostik, tanpa mengubah apapun)
+app.get('/api/db-check', async (req, res) => {
+  if (req.query.key !== 'HIMTI2025SETUP') return res.status(403).json({ error: 'Key tidak valid' });
+  try {
+    const tables = ['users', 'anggota', 'pembayaran', 'perpanjangan_requests', 'kegiatan', 'presensi', 'kontak_himti', 'info_pembayaran', 'admin_profiles'];
+    const result = {};
+    for (const t of tables) {
+      const r = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name=$1 ORDER BY ordinal_position`,
+        [t]
+      );
+      result[t] = r.rows.length ? r.rows.map(x => `${x.column_name} (${x.data_type})`) : 'TABEL TIDAK DITEMUKAN';
+    }
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
