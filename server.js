@@ -59,8 +59,19 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-    // Tambah kolom session_token jika belum ada (migrasi dari versi lama)
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_token VARCHAR(64);`).catch(()=>{});
+    // Tambah kolom users jika belum ada (migrasi dari skema versi lama)
+    const usersColumns = [
+      ['username', 'VARCHAR(50)'],
+      ['password_hash', 'VARCHAR(255)'],
+      ['role', "VARCHAR(20) DEFAULT 'anggota'"],
+      ['is_active', 'BOOLEAN DEFAULT true'],
+      ['session_token', 'VARCHAR(64)'],
+      ['created_at', 'TIMESTAMP DEFAULT NOW()']
+    ];
+    for (const [col, type] of usersColumns) {
+      await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col} ${type}`).catch(() => {});
+    }
+    await client.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username)`).catch(() => {});
 
     // Anggota dengan kolom masa_aktif
     await client.query(`
@@ -83,12 +94,30 @@ async function initDB() {
       )
     `);
 
-    // Tambahkan kolom jika belum ada (untuk migrasi dari versi lama)
-    await client.query(`
-      ALTER TABLE anggota ADD COLUMN IF NOT EXISTS tahun_bergabung INTEGER;
-      ALTER TABLE anggota ADD COLUMN IF NOT EXISTS masa_aktif_mulai DATE;
-      ALTER TABLE anggota ADD COLUMN IF NOT EXISTS masa_aktif_sampai DATE;
-    `).catch(() => {});
+    // Tambahkan SEMUA kolom yang mungkin belum ada (migrasi dari skema versi lama).
+    // Menangani kasus tabel 'anggota' sudah ada sebelumnya dengan struktur berbeda.
+    // Aman dijalankan berkali-kali & tidak menghapus data yang sudah ada.
+    const anggotaColumns = [
+      ['user_id', 'INTEGER REFERENCES users(id) ON DELETE CASCADE'],
+      ['nama', 'VARCHAR(100)'],
+      ['npm', 'VARCHAR(20)'],
+      ['email', 'VARCHAR(100)'],
+      ['no_hp', 'VARCHAR(20)'],
+      ['angkatan', 'VARCHAR(10)'],
+      ['prodi', "VARCHAR(100) DEFAULT 'Teknik Informatika'"],
+      ['foto_url', 'TEXT'],
+      ['status', "VARCHAR(20) DEFAULT 'pending'"],
+      ['tahun_bergabung', 'INTEGER'],
+      ['masa_aktif_mulai', 'DATE'],
+      ['masa_aktif_sampai', 'DATE'],
+      ['created_at', 'TIMESTAMP DEFAULT NOW()'],
+      ['updated_at', 'TIMESTAMP DEFAULT NOW()']
+    ];
+    for (const [col, type] of anggotaColumns) {
+      await client.query(`ALTER TABLE anggota ADD COLUMN IF NOT EXISTS ${col} ${type}`).catch(() => {});
+    }
+    // Pastikan NPM unik (skip kalau constraint sudah ada atau ada data duplikat)
+    await client.query(`ALTER TABLE anggota ADD CONSTRAINT anggota_npm_key UNIQUE (npm)`).catch(() => {});
 
     // Pembayaran/Iuran
     await client.query(`
