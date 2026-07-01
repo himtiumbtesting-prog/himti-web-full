@@ -47,6 +47,11 @@ select option{background:var(--navy2)}
 .login-link a{color:var(--gold);text-decoration:none}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .badge-gold{background:var(--gold);color:var(--navy);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-toggle{position:absolute;right:2px;top:2px;bottom:2px;background:transparent;border:none;
+  cursor:pointer;font-size:1.1rem;padding:0 12px;color:var(--gray);opacity:.75;transition:.2s}
+.pw-toggle:hover{opacity:1;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -73,7 +78,10 @@ select option{background:var(--navy2)}
     </div>
     <div class="form-group">
       <label>Password <span>*</span></label>
-      <input type="password" id="password" placeholder="minimal 6 karakter">
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="minimal 6 karakter">
+        <button type="button" class="pw-toggle" onclick="togglePw('password',this)">👁️</button>
+      </div>
     </div>
     <div class="form-group">
       <label>Nama Lengkap <span>*</span></label>
@@ -157,6 +165,11 @@ select option{background:var(--navy2)}
 </div>
 
 <script>
+function togglePw(id, btn){
+  const inp=document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
 async function loadInfo() {
   try {
     const [infoByr, kontak] = await Promise.all([

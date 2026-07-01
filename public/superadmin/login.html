@@ -25,6 +25,11 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
 .alert{padding:11px 14px;border-radius:8px;margin-top:12px;font-size:.88rem;display:none;background:rgba(220,53,69,.15);border:1px solid var(--danger);color:#f87184}
 .links{text-align:center;margin-top:18px;font-size:.83rem;color:var(--gray)}
 .links a{color:var(--gold);text-decoration:none}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-toggle{position:absolute;right:2px;top:2px;bottom:2px;background:transparent;border:none;
+  cursor:pointer;font-size:1.1rem;padding:0 12px;color:var(--gray);opacity:.75;transition:.2s}
+.pw-toggle:hover{opacity:1;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -43,7 +48,10 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
   </div>
   <div class="form-group">
     <label>Password</label>
-    <input type="password" id="password" placeholder="password super admin" onkeydown="if(event.key==='Enter')login()">
+    <div class="pw-wrap">
+      <input type="password" id="password" placeholder="password super admin" onkeydown="if(event.key==='Enter')login()">
+      <button type="button" class="pw-toggle" onclick="togglePw('password',this)">👁️</button>
+    </div>
   </div>
   <div id="kick-msg" style="padding:11px 14px;border-radius:8px;margin-bottom:10px;font-size:.88rem;display:none"></div>
   <div class="alert" id="alert-err"></div>
@@ -51,6 +59,11 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
   <div class="links"><a href="/admin/login.html">Login sebagai Admin biasa</a></div>
 </div>
 <script>
+function togglePw(id, btn){
+  const inp=document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
 if(sessionStorage.getItem('himti_token')&&sessionStorage.getItem('himti_role')==='superadmin')
   window.location.href='/superadmin/dashboard.html';
 async function login(){
