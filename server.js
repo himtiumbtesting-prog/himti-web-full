@@ -75,6 +75,21 @@ async function initDB() {
     await client.query(usersAlterSQL).catch((e) => console.log('users migration:', e.message));
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username)`).catch(() => {});
 
+    // Perbaikan dinamis: longgarkan kolom NOT NULL legacy yang tidak kita kenal di tabel users
+    try {
+      const notNullUsers = await client.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name='users' AND is_nullable='NO' AND column_name NOT IN ('id','username','password_hash')
+      `);
+      if (notNullUsers.rows.length) {
+        const dropSQL = notNullUsers.rows
+          .map(r => `ALTER TABLE users ALTER COLUMN ${r.column_name} DROP NOT NULL;`)
+          .join('\n');
+        await client.query(dropSQL).catch((e) => console.log('drop not null users:', e.message));
+        console.log('Kolom NOT NULL legacy users dilonggarkan:', notNullUsers.rows.map(r => r.column_name).join(', '));
+      }
+    } catch (e) { console.log('cek not null users gagal:', e.message); }
+
     // Anggota dengan kolom masa_aktif
     await client.query(`
       CREATE TABLE IF NOT EXISTS anggota (
@@ -123,6 +138,24 @@ async function initDB() {
     await client.query(anggotaAlterSQL).catch((e) => console.log('anggota migration:', e.message));
     // Pastikan NPM unik (skip kalau constraint sudah ada atau ada data duplikat)
     await client.query(`ALTER TABLE anggota ADD CONSTRAINT anggota_npm_key UNIQUE (npm)`).catch(() => {});
+
+    // Perbaikan dinamis: tabel 'anggota' versi lama mungkin punya kolom WAJIB (NOT NULL)
+    // yang tidak kita kenal (misal kolom 'password' dari skema lama yang berbeda).
+    // Kode kita hanya wajibkan 'nama' dan 'npm' — kolom lain yang masih NOT NULL
+    // otomatis dilonggarkan supaya INSERT dari sistem baru tidak gagal.
+    try {
+      const notNullCols = await client.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name='anggota' AND is_nullable='NO' AND column_name NOT IN ('id','nama','npm')
+      `);
+      if (notNullCols.rows.length) {
+        const dropSQL = notNullCols.rows
+          .map(r => `ALTER TABLE anggota ALTER COLUMN ${r.column_name} DROP NOT NULL;`)
+          .join('\n');
+        await client.query(dropSQL).catch((e) => console.log('drop not null anggota:', e.message));
+        console.log('Kolom NOT NULL legacy dilonggarkan:', notNullCols.rows.map(r => r.column_name).join(', '));
+      }
+    } catch (e) { console.log('cek not null anggota gagal:', e.message); }
 
     // Pembayaran/Iuran
     await client.query(`
@@ -977,12 +1010,12 @@ app.get('/api/setup', async (req, res) => {
   try {
     await initDB();
     const cols = await pool.query(
-      `SELECT column_name FROM information_schema.columns WHERE table_name='anggota' ORDER BY column_name`
+      `SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name='anggota' ORDER BY column_name`
     );
     res.json({
       success: true,
       message: 'Database berhasil diinisialisasi ulang',
-      kolom_anggota_sekarang: cols.rows.map(r => r.column_name)
+      kolom_anggota_sekarang: cols.rows.map(r => `${r.column_name}${r.is_nullable === 'NO' ? ' [WAJIB]' : ''}`)
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
