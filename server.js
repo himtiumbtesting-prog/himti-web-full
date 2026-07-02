@@ -60,6 +60,7 @@ async function initDB() {
       )
     `);
     // Tambah kolom users jika belum ada (migrasi dari skema versi lama)
+    // Digabung jadi SATU query batch agar tidak terpotong timeout di tengah jalan
     const usersColumns = [
       ['username', 'VARCHAR(50)'],
       ['password_hash', 'VARCHAR(255)'],
@@ -68,9 +69,10 @@ async function initDB() {
       ['session_token', 'VARCHAR(64)'],
       ['created_at', 'TIMESTAMP DEFAULT NOW()']
     ];
-    for (const [col, type] of usersColumns) {
-      await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col} ${type}`).catch(() => {});
-    }
+    const usersAlterSQL = usersColumns
+      .map(([col, type]) => `ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col} ${type};`)
+      .join('\n');
+    await client.query(usersAlterSQL).catch((e) => console.log('users migration:', e.message));
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username)`).catch(() => {});
 
     // Anggota dengan kolom masa_aktif
@@ -96,6 +98,8 @@ async function initDB() {
 
     // Tambahkan SEMUA kolom yang mungkin belum ada (migrasi dari skema versi lama).
     // Menangani kasus tabel 'anggota' sudah ada sebelumnya dengan struktur berbeda.
+    // Digabung jadi SATU query batch (1 round-trip) agar tidak terpotong timeout
+    // di tengah jalan seperti yang terjadi dengan loop per-kolom sebelumnya.
     // Aman dijalankan berkali-kali & tidak menghapus data yang sudah ada.
     const anggotaColumns = [
       ['user_id', 'INTEGER REFERENCES users(id) ON DELETE CASCADE'],
@@ -113,9 +117,10 @@ async function initDB() {
       ['created_at', 'TIMESTAMP DEFAULT NOW()'],
       ['updated_at', 'TIMESTAMP DEFAULT NOW()']
     ];
-    for (const [col, type] of anggotaColumns) {
-      await client.query(`ALTER TABLE anggota ADD COLUMN IF NOT EXISTS ${col} ${type}`).catch(() => {});
-    }
+    const anggotaAlterSQL = anggotaColumns
+      .map(([col, type]) => `ALTER TABLE anggota ADD COLUMN IF NOT EXISTS ${col} ${type};`)
+      .join('\n');
+    await client.query(anggotaAlterSQL).catch((e) => console.log('anggota migration:', e.message));
     // Pastikan NPM unik (skip kalau constraint sudah ada atau ada data duplikat)
     await client.query(`ALTER TABLE anggota ADD CONSTRAINT anggota_npm_key UNIQUE (npm)`).catch(() => {});
 
