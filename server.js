@@ -1041,6 +1041,50 @@ app.get('/api/db-check', async (req, res) => {
   }
 });
 
+// =============================================
+// RESET DATA ANGGOTA (khusus, tidak mengubah struktur/admin/settings)
+// =============================================
+// Menghapus SEMUA data terkait anggota: akun anggota, pembayaran, perpanjangan,
+// presensi. TIDAK menyentuh: akun admin/superadmin, kontak HIMTI, info pembayaran,
+// daftar kegiatan, atau struktur tabel manapun. Aksi ini PERMANEN.
+// Wajib pakai &confirm=YES supaya tidak terpicu tidak sengaja.
+app.get('/api/reset-anggota', async (req, res) => {
+  if (req.query.key !== 'HIMTI2025SETUP') return res.status(403).json({ error: 'Key tidak valid' });
+  if (req.query.confirm !== 'YES') {
+    return res.status(400).json({
+      error: 'Konfirmasi diperlukan sebelum menghapus data',
+      cara_konfirmasi: 'Tambahkan &confirm=YES di akhir URL untuk melanjutkan',
+      peringatan: 'Aksi ini akan menghapus PERMANEN semua akun anggota, riwayat pembayaran, perpanjangan, dan presensi. Akun admin/superadmin, kontak HIMTI, dan info pembayaran TIDAK terpengaruh.'
+    });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const presensiRes = await client.query('DELETE FROM presensi RETURNING id');
+    const pembayaranRes = await client.query('DELETE FROM pembayaran RETURNING id');
+    const perpanjanganRes = await client.query('DELETE FROM perpanjangan_requests RETURNING id');
+    const anggotaRes = await client.query('DELETE FROM anggota RETURNING id');
+    const usersRes = await client.query(`DELETE FROM users WHERE role='anggota' RETURNING id`);
+    await client.query('COMMIT');
+    res.json({
+      success: true,
+      message: '✅ Semua data anggota berhasil dihapus. Struktur tabel, akun admin/superadmin, dan pengaturan lain tidak berubah.',
+      dihapus: {
+        akun_anggota: usersRes.rowCount,
+        data_anggota: anggotaRes.rowCount,
+        riwayat_pembayaran: pembayaranRes.rowCount,
+        riwayat_perpanjangan: perpanjanganRes.rowCount,
+        riwayat_presensi: presensiRes.rowCount
+      }
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // Beacon logout (dipanggil saat tab/browser ditutup via navigator.sendBeacon)
 app.post('/api/auth/logout-beacon', async (req, res) => {
   try {
