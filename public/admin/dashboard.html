@@ -23,6 +23,7 @@
     <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
     <div class="nav-section">Pengaturan</div>
     <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+    <a href="/admin/profil.html"><span class="icon">👤</span> Profil Saya</a>
   </nav>
   <div class="sidebar-footer">
     <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
@@ -81,6 +82,37 @@
         </div>
       </div>
     </div>
+
+    <!-- PROFIL SAYA (nama, jabatan, no_hp - tampil ke anggota di daftar pengurus) -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-header"><span class="table-title">👤 Profil Saya</span></div>
+      <div style="padding:20px">
+        <p style="color:var(--gray);font-size:.83rem;margin-bottom:16px">
+          Nomor HP kamu akan tampil ke anggota di daftar pengurus (kalau diisi). Boleh dikosongkan.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Nama</label>
+            <input type="text" id="p-nama" style="width:100%" placeholder="Nama lengkap">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jabatan</label>
+            <input type="text" id="p-jabatan" style="width:100%" placeholder="contoh: Bendahara, Sekretaris">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="p-email" style="width:100%" placeholder="email (opsional)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. HP / WhatsApp</label>
+            <input type="text" id="p-no-hp" style="width:100%" placeholder="boleh dikosongkan">
+          </div>
+        </div>
+        <div class="alert alert-success" id="p-ok"></div>
+        <div class="alert alert-danger" id="p-err"></div>
+        <button class="btn btn-gold" onclick="saveProfil()">💾 Simpan Profil</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -116,7 +148,42 @@ async function loadKontak() {
     document.getElementById('info-email').textContent = '📧 ' + (k.email_himti || 'Belum diatur');
   } catch (e) {}
 }
-loadStats(); loadKontak();
+
+async function loadProfilSaya() {
+  try {
+    const r = await fetch('/api/admin/profil', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    document.getElementById('p-nama').value = d.nama || '';
+    document.getElementById('p-jabatan').value = d.jabatan || '';
+    document.getElementById('p-email').value = d.email || '';
+    document.getElementById('p-no-hp').value = d.no_hp || '';
+  } catch (e) {}
+}
+
+async function saveProfil() {
+  const ok = document.getElementById('p-ok');
+  const err = document.getElementById('p-err');
+  ok.style.display = err.style.display = 'none';
+  const nama = document.getElementById('p-nama').value.trim();
+  if (!nama) { err.textContent = 'Nama wajib diisi!'; err.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/admin/profil', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nama,
+        jabatan: document.getElementById('p-jabatan').value.trim(),
+        email: document.getElementById('p-email').value.trim(),
+        no_hp: document.getElementById('p-no-hp').value.trim()
+      })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Profil berhasil disimpan! Nomor HP (jika diisi) akan tampil ke anggota.'; ok.style.display = 'block'; }
+  } catch (e) { err.textContent = 'Gagal menyimpan.'; err.style.display = 'block'; }
+}
+
+loadStats(); loadKontak(); loadProfilSaya();
 </script>
 </body>
 </html>

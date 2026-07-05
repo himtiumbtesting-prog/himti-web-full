@@ -42,6 +42,34 @@ app.use((req, res, next) => {
 });
 
 // =============================================
+// HELPER MIGRASI (aman, tidak menghapus data)
+// =============================================
+// Menambahkan kolom yang kurang + melonggarkan kolom NOT NULL legacy
+// yang tidak dikenal, untuk tabel manapun yang mungkin sudah ada sebelumnya
+// dengan skema berbeda (sisa sistem lama yang berbagi database yang sama).
+async function migrateTableColumns(client, tableName, columns, requiredCols = ['id']) {
+  const alterSQL = columns
+    .map(([col, type]) => `ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS ${col} ${type};`)
+    .join('\n');
+  await client.query(alterSQL).catch((e) => console.log(`${tableName} migration:`, e.message));
+
+  try {
+    const notNullCols = await client.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name=$1 AND is_nullable='NO' AND column_name != ALL($2::text[])`,
+      [tableName, requiredCols]
+    );
+    if (notNullCols.rows.length) {
+      const dropSQL = notNullCols.rows
+        .map(r => `ALTER TABLE ${tableName} ALTER COLUMN ${r.column_name} DROP NOT NULL;`)
+        .join('\n');
+      await client.query(dropSQL).catch((e) => console.log(`drop not null ${tableName}:`, e.message));
+      console.log(`Kolom NOT NULL legacy dilonggarkan (${tableName}):`, notNullCols.rows.map(r => r.column_name).join(', '));
+    }
+  } catch (e) { console.log(`cek not null ${tableName} gagal:`, e.message); }
+}
+
+// =============================================
 // DATABASE INITIALIZATION
 // =============================================
 async function initDB() {
@@ -173,6 +201,18 @@ async function initDB() {
         processed_by INTEGER REFERENCES users(id)
       )
     `);
+    await migrateTableColumns(client, 'pembayaran', [
+      ['anggota_id', 'INTEGER REFERENCES anggota(id) ON DELETE CASCADE'],
+      ['jenis', "VARCHAR(30) DEFAULT 'iuran_awal'"],
+      ['jumlah', 'INTEGER DEFAULT 50000'],
+      ['bukti_url', 'TEXT'],
+      ['status', "VARCHAR(20) DEFAULT 'pending'"],
+      ['catatan_anggota', 'TEXT'],
+      ['catatan_admin', 'TEXT'],
+      ['submitted_at', 'TIMESTAMP DEFAULT NOW()'],
+      ['processed_at', 'TIMESTAMP'],
+      ['processed_by', 'INTEGER REFERENCES users(id)']
+    ]);
 
     // Perpanjangan masa aktif
     await client.query(`
@@ -190,6 +230,18 @@ async function initDB() {
         processed_by INTEGER REFERENCES users(id)
       )
     `);
+    await migrateTableColumns(client, 'perpanjangan_requests', [
+      ['anggota_id', 'INTEGER REFERENCES anggota(id) ON DELETE CASCADE'],
+      ['bukti_url', 'TEXT'],
+      ['status', "VARCHAR(20) DEFAULT 'pending'"],
+      ['catatan', 'TEXT'],
+      ['catatan_admin', 'TEXT'],
+      ['masa_aktif_lama', 'DATE'],
+      ['masa_aktif_baru', 'DATE'],
+      ['requested_at', 'TIMESTAMP DEFAULT NOW()'],
+      ['processed_at', 'TIMESTAMP'],
+      ['processed_by', 'INTEGER REFERENCES users(id)']
+    ]);
 
     // Kegiatan/Event untuk presensi
     await client.query(`
@@ -204,6 +256,16 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    await migrateTableColumns(client, 'kegiatan', [
+      ['nama', 'VARCHAR(100)'],
+      ['deskripsi', 'TEXT'],
+      ['kode_presensi', 'VARCHAR(10)'],
+      ['tanggal', 'DATE'],
+      ['is_active', 'BOOLEAN DEFAULT true'],
+      ['created_by', 'INTEGER REFERENCES users(id)'],
+      ['created_at', 'TIMESTAMP DEFAULT NOW()']
+    ]);
+    await client.query(`ALTER TABLE kegiatan ADD CONSTRAINT kegiatan_kode_presensi_key UNIQUE (kode_presensi)`).catch(() => {});
 
     // Presensi
     await client.query(`
@@ -215,6 +277,11 @@ async function initDB() {
         UNIQUE(anggota_id, kegiatan_id)
       )
     `);
+    await migrateTableColumns(client, 'presensi', [
+      ['anggota_id', 'INTEGER REFERENCES anggota(id)'],
+      ['kegiatan_id', 'INTEGER REFERENCES kegiatan(id)'],
+      ['waktu_presensi', 'TIMESTAMP DEFAULT NOW()']
+    ]);
 
     // Kontak HIMTI (single row)
     await client.query(`
@@ -229,6 +296,15 @@ async function initDB() {
         updated_by INTEGER REFERENCES users(id)
       )
     `);
+    await migrateTableColumns(client, 'kontak_himti', [
+      ['nomor_wa', 'VARCHAR(30)'],
+      ['nomor_hp', 'VARCHAR(30)'],
+      ['email_himti', 'VARCHAR(100)'],
+      ['alamat', 'TEXT'],
+      ['instagram', 'VARCHAR(100)'],
+      ['updated_at', 'TIMESTAMP DEFAULT NOW()'],
+      ['updated_by', 'INTEGER REFERENCES users(id)']
+    ]);
 
     // Info Pembayaran (single row)
     await client.query(`
@@ -244,6 +320,16 @@ async function initDB() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    await migrateTableColumns(client, 'info_pembayaran', [
+      ['nama_bank', 'VARCHAR(50)'],
+      ['nomor_rekening', 'VARCHAR(50)'],
+      ['atas_nama', 'VARCHAR(100)'],
+      ['nominal_iuran', 'INTEGER DEFAULT 50000'],
+      ['nominal_perpanjangan', 'INTEGER DEFAULT 50000'],
+      ['instruksi', 'TEXT'],
+      ['qris_image', 'TEXT'],
+      ['updated_at', 'TIMESTAMP DEFAULT NOW()']
+    ]);
 
     // Admin profiles
     await client.query(`
@@ -253,9 +339,20 @@ async function initDB() {
         nama VARCHAR(100) NOT NULL,
         email VARCHAR(100),
         jabatan VARCHAR(100),
+        no_hp VARCHAR(20),
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    await migrateTableColumns(client, 'admin_profiles', [
+      ['user_id', 'INTEGER REFERENCES users(id) ON DELETE CASCADE'],
+      ['nama', 'VARCHAR(100)'],
+      ['email', 'VARCHAR(100)'],
+      ['jabatan', 'VARCHAR(100)'],
+      ['no_hp', 'VARCHAR(20)'],
+      ['created_at', 'TIMESTAMP DEFAULT NOW()']
+    ]);
+    // Unique constraint di user_id supaya bisa pakai ON CONFLICT (upsert) saat admin edit profil sendiri
+    await client.query(`ALTER TABLE admin_profiles ADD CONSTRAINT admin_profiles_user_id_key UNIQUE (user_id)`).catch(() => {});
 
     // === Seed default accounts ===
     const sa = await client.query("SELECT id FROM users WHERE username = 'superadmin'");
@@ -454,6 +551,22 @@ app.get('/api/auth/me', verifyToken, (req, res) => res.json({ user: req.user }))
 // =============================================
 // ANGGOTA ROUTES
 // =============================================
+
+// Daftar pengurus (khusus role admin) beserta nomor HP masing-masing (kalau diisi).
+// Super Admin sengaja TIDAK ditampilkan di sini. Mendukung berapapun jumlah admin.
+app.get('/api/pengurus', verifyToken, requireRole('anggota', 'admin', 'superadmin'), async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT ap.nama, ap.jabatan, ap.no_hp
+      FROM admin_profiles ap
+      JOIN users u ON u.id = ap.user_id
+      WHERE u.is_active = true AND u.role = 'admin'
+      ORDER BY ap.id ASC
+    `);
+    res.json(r.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/anggota/profil', verifyToken, requireRole('anggota'), async (req, res) => {
   try {
     await syncExpiredStatus();
@@ -635,6 +748,31 @@ app.get('/api/info-pembayaran', async (req, res) => {
 // =============================================
 // ADMIN ROUTES
 // =============================================
+
+// Profil admin sendiri — termasuk no_hp yang akan tampil ke anggota.
+// Khusus role 'admin'; Super Admin tidak memakai fitur nomor HP ini.
+app.get('/api/admin/profil', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT nama, email, jabatan, no_hp FROM admin_profiles WHERE user_id=$1`, [req.user.id]);
+    res.json(r.rows[0] || { nama: req.user.nama || req.user.username, email: '', jabatan: '', no_hp: '' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/admin/profil', verifyToken, requireRole('admin'), async (req, res) => {
+  const { nama, email, jabatan, no_hp } = req.body;
+  if (!nama || !nama.trim()) return res.status(400).json({ error: 'Nama wajib diisi' });
+  try {
+    // Upsert: buat baris profil kalau belum ada, atau update kalau sudah ada — no_hp boleh dikosongkan.
+    await pool.query(
+      `INSERT INTO admin_profiles (user_id, nama, email, jabatan, no_hp)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (user_id) DO UPDATE SET nama=$2, email=$3, jabatan=$4, no_hp=$5`,
+      [req.user.id, nama.trim(), email || null, jabatan || null, no_hp || null]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/admin/stats', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
   try {
     await syncExpiredStatus();

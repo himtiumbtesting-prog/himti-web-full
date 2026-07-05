@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil Saya - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html" id="link-dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+    <a href="/admin/profil.html" class="active"><span class="icon">👤</span> Profil Saya</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Profil <span>Saya</span></div></div>
+  <div class="content">
+    <div style="max-width:600px">
+      <div style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.88rem;color:var(--gray)">
+        ℹ️ Nomor HP di sini bersifat opsional. Jika diisi, akan terlihat oleh <strong style="color:var(--white)">seluruh anggota</strong> di dashboard mereka sebagai kontak pengurus. Kalau dikosongkan, tidak akan ditampilkan sama sekali.
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">✏️ Edit Profil</span></div>
+        <div style="padding:24px">
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap <span style="color:var(--gold)">*</span></label>
+            <input type="text" id="nama" style="width:100%" placeholder="nama kamu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jabatan</label>
+            <input type="text" id="jabatan" style="width:100%" placeholder="contoh: Bendahara, Sekretaris...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="email" style="width:100%" placeholder="email kamu (opsional)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. HP / WhatsApp <span style="color:var(--gray);font-weight:400">(opsional, kosongkan kalau tidak mau ditampilkan)</span></label>
+            <input type="text" id="no_hp" style="width:100%" placeholder="contoh: 081234567890">
+          </div>
+          <div class="alert alert-success" id="ok"></div>
+          <div class="alert alert-danger" id="err"></div>
+          <button class="btn btn-gold" id="btn-save" onclick="save()">💾 Simpan Profil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = sessionStorage.getItem('himti_token');
+const role = sessionStorage.getItem('himti_role');
+if (!token || role !== 'admin') window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = sessionStorage.getItem('himti_nama') || 'Admin';
+function logout(){ himtiLogout(); }
+
+async function load() {
+  try {
+    const res = await fetch('/api/admin/profil', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await res.json();
+    if (!res.ok) return;
+    document.getElementById('nama').value = d.nama || '';
+    document.getElementById('jabatan').value = d.jabatan || '';
+    document.getElementById('email').value = d.email || '';
+    document.getElementById('no_hp').value = d.no_hp || '';
+  } catch (e) {}
+}
+
+async function save() {
+  const ok = document.getElementById('ok');
+  const err = document.getElementById('err');
+  ok.style.display = err.style.display = 'none';
+  const nama = document.getElementById('nama').value.trim();
+  if (!nama) { err.textContent = 'Nama wajib diisi!'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    const res = await fetch('/api/admin/profil', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nama,
+        jabatan: document.getElementById('jabatan').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        no_hp: document.getElementById('no_hp').value.trim()
+      })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Profil berhasil disimpan!'; ok.style.display = 'block'; }
+  } catch (e) { err.textContent = 'Gagal menyimpan.'; err.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = '💾 Simpan Profil'; }
+}
+load();
+</script>
+</body>
+</html>

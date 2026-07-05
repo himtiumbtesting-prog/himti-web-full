@@ -184,7 +184,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1a202
       💬 WhatsApp
     </a>
   </div>
+
+  <!-- DAFTAR PENGURUS -->
+  <div id="pengurus-section" style="display:none;margin-top:16px">
+    <div class="menu-title">Daftar Pengurus</div>
+    <div id="pengurus-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
 </div>
+
+<style>
+.pengurus-item{background:var(--navy2);border:1px solid var(--navy3);border-radius:12px;
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pengurus-name{font-weight:700;font-size:.9rem}
+.pengurus-jabatan{color:var(--gold);font-size:.78rem;margin-top:2px}
+.pengurus-wa{background:var(--success);color:#fff;padding:6px 14px;border-radius:8px;
+  text-decoration:none;font-size:.8rem;font-weight:600;white-space:nowrap}
+.pengurus-nowa{color:var(--gray);font-size:.78rem;font-style:italic}
+</style>
 
 <script>
 const token = sessionStorage.getItem('himti_token');
@@ -271,7 +287,33 @@ async function load() {
       '<p style="color:#ef4444;text-align:center">Gagal memuat. <a href="" style="color:#c9a227">Refresh</a></p>';
   }
 }
+
+async function loadPengurus() {
+  try {
+    const res = await fetch('/api/pengurus', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return; // sembunyikan section kalau belum ada pengurus
+
+    document.getElementById('pengurus-list').innerHTML = data.map(p => {
+      const punyaWa = p.no_hp && p.no_hp.trim();
+      const waHref = punyaWa ? 'https://wa.me/' + p.no_hp.replace(/\D/g, '') : '#';
+      return `
+        <div class="pengurus-item">
+          <div>
+            <div class="pengurus-name">${p.nama}</div>
+            <div class="pengurus-jabatan">${p.jabatan || 'Pengurus HIMTI'}</div>
+          </div>
+          ${punyaWa
+            ? `<a href="${waHref}" target="_blank" class="pengurus-wa">💬 ${p.no_hp}</a>`
+            : `<span class="pengurus-nowa">Nomor belum diisi</span>`}
+        </div>`;
+    }).join('');
+    document.getElementById('pengurus-section').style.display = 'block';
+  } catch (e) { /* diamkan, section tetap tersembunyi kalau gagal */ }
+}
+
 load();
+loadPengurus();
 </script>
 </body>
 </html>
