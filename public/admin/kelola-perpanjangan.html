@@ -18,7 +18,7 @@
     <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
     <div class="nav-section">Pengaturan</div>
     <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
-    <a href="/admin/profil.html"><span class="icon">👤</span> Profil Saya</a>
+    <a href="/admin/profil.html" id="link-profil-saya"><span class="icon">👤</span> Profil Saya</a>
   </nav>
   <div class="sidebar-footer">
     <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
@@ -94,6 +94,9 @@ document.getElementById('admin-nama').textContent = sessionStorage.getItem('himt
 // Perbaikan navigasi: jika yang login adalah superadmin, sesuaikan sidebar
 // supaya "Dashboard" mengarah ke dashboard Super Admin, bukan dashboard Admin biasa.
 if (role === 'superadmin') {
+  // Sembunyikan link "Profil Saya" — fitur ini khusus untuk Admin biasa, bukan Super Admin
+  const profilLink = document.getElementById('link-profil-saya');
+  if (profilLink) profilLink.remove();
   const dashLink = document.getElementById('link-dashboard');
   if (dashLink) {
     dashLink.href = '/superadmin/dashboard.html';
