@@ -11,7 +11,7 @@
   <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
   <nav class="sidebar-nav">
     <div class="nav-section">Menu Utama</div>
-    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/dashboard.html" id="link-dashboard"><span class="icon">📊</span> Dashboard</a>
     <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
     <a href="/admin/kelola-pembayaran.html" class="active"><span class="icon">💳</span> Kelola Iuran</a>
     <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
@@ -89,6 +89,22 @@ const token = sessionStorage.getItem('himti_token');
 const role = sessionStorage.getItem('himti_role');
 if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
 document.getElementById('admin-nama').textContent = sessionStorage.getItem('himti_nama') || 'Admin';
+// Perbaikan navigasi: jika yang login adalah superadmin, sesuaikan sidebar
+// supaya "Dashboard" mengarah ke dashboard Super Admin, bukan dashboard Admin biasa.
+if (role === 'superadmin') {
+  const dashLink = document.getElementById('link-dashboard');
+  if (dashLink) {
+    dashLink.href = '/superadmin/dashboard.html';
+    dashLink.innerHTML = '<span class="icon">📊</span> Dashboard SA';
+    const kelolaAdminLink = document.createElement('a');
+    kelolaAdminLink.href = '/superadmin/kelola-admin.html';
+    kelolaAdminLink.innerHTML = '<span class="icon">👤</span> Kelola Admin';
+    dashLink.insertAdjacentElement('afterend', kelolaAdminLink);
+  }
+  const logoSub = document.querySelector('.logo-sub');
+  if (logoSub) logoSub.textContent = 'Super Admin';
+}
+
 function logout(){ himtiLogout(); }
 function fmtDT(d) { return d ? new Date(d).toLocaleString('id-ID') : '-'; }
 function fmtRp(n) { return 'Rp ' + (n||0).toLocaleString('id-ID'); }

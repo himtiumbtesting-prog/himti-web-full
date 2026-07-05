@@ -1085,6 +1085,54 @@ app.get('/api/reset-anggota', async (req, res) => {
   }
 });
 
+// =============================================
+// FULL RESET (hapus TOTAL semua tabel & bangun ulang dari nol)
+// =============================================
+// Solusi tuntas untuk skema lama yang bentrok di BANYAK tabel sekaligus
+// (anggota, kegiatan, pembayaran, dll dari sistem lama yang berbagi database
+// yang sama). Menghapus SEMUA tabel aplikasi lalu membuatnya ulang dengan
+// struktur yang benar 100%, plus akun admin/superadmin default dan
+// pengaturan kontak/pembayaran default. TIDAK ADA data lama yang tersisa.
+// PERMANEN & MENYELURUH. Wajib &confirm=YES.
+app.get('/api/full-reset', async (req, res) => {
+  if (req.query.key !== 'HIMTI2025SETUP') return res.status(403).json({ error: 'Key tidak valid' });
+  if (req.query.confirm !== 'YES') {
+    return res.status(400).json({
+      error: 'Konfirmasi diperlukan sebelum menghapus SEMUA data',
+      cara_konfirmasi: 'Tambahkan &confirm=YES di akhir URL untuk melanjutkan',
+      peringatan: 'Aksi ini MENGHAPUS TOTAL seluruh tabel: anggota, admin, superadmin, kegiatan, pembayaran, perpanjangan, presensi, kontak HIMTI, info pembayaran. Semua dibuat ulang dari nol dengan akun default. TIDAK BISA DIBATALKAN.'
+    });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const tables = [
+      'presensi', 'perpanjangan_requests', 'pembayaran', 'admin_profiles',
+      'anggota', 'kegiatan', 'kontak_himti', 'info_pembayaran', 'users'
+    ];
+    for (const t of tables) {
+      await client.query(`DROP TABLE IF EXISTS ${t} CASCADE`);
+    }
+    await client.query('COMMIT');
+    // Bangun ulang semua tabel dengan struktur benar + seed akun default
+    await initDB();
+    res.json({
+      success: true,
+      message: '✅ Semua tabel berhasil dihapus & dibuat ulang dari nol dengan struktur yang benar. Tidak ada lagi sisa skema lama.',
+      akun_default: {
+        superadmin: { username: 'superadmin', password: 'himti2025' },
+        admin: { username: 'admin', password: 'admin2025' }
+      },
+      catatan: 'Semua anggota harus daftar ulang dari awal. Kontak HIMTI dan info pembayaran kembali ke nilai default, silakan atur ulang di menu Admin.'
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // Beacon logout (dipanggil saat tab/browser ditutup via navigator.sendBeacon)
 app.post('/api/auth/logout-beacon', async (req, res) => {
   try {

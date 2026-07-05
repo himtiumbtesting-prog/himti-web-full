@@ -10,3 +10,15 @@ tapi harus instal dulu ke githubnya
  -git push origin main
 
 2.atau bisa edit di ithubnya langsung
+
+
+kalau error saat sudah di update
+git rm -r api/
+git add .
+git commit -m "hapus folder api lama yang konflik"
+git push origin main
+
+3.yang singkat saja
+git add .
+git commit -m "fix"
+git push origin main
