@@ -44,7 +44,7 @@
       <div class="card-title">✏️ Edit Info Kontak</div>
       <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" placeholder="email aktif kamu"></div>
       <div class="form-group"><label class="form-label">No. HP / WhatsApp</label><input type="text" id="no_hp" placeholder="08xxxxxxxxxx"></div>
-      <div class="form-group"><label class="form-label">Ganti Foto (opsional)</label><input type="file" id="foto" accept="image/*"></div>
+      <div class="form-group"><label class="form-label">Ganti Foto (opsional)</label><input type="file" id="foto" accept="image/*" onchange="himtiValidateFile(this)"></div>
       <div class="alert alert-success" id="ok"></div>
       <div class="alert alert-danger" id="err"></div>
       <button class="btn btn-primary btn-full" id="btn-save" onclick="save()">💾 Simpan Perubahan</button>

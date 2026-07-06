@@ -22,10 +22,14 @@ const pool = new Pool({
 // File upload (memory storage → base64)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB (Vercel serverless punya batas body request ~4.5MB)
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Hanya file gambar yang diizinkan'), false);
+    const isHeic = /\.(heic|heif)$/i.test(file.originalname) || file.mimetype === 'image/heic' || file.mimetype === 'image/heif';
+    if (isHeic) {
+      return cb(new Error('Format HEIC/HEIF (foto iPhone) belum didukung. Ganti dulu ke JPG: di iPhone buka Pengaturan > Kamera > Format > pilih "Kompatibel Paling Luas", lalu ambil foto baru atau screenshot foto yang ada.'), false);
+    }
+    if (file.mimetype.startsWith('image/')) return cb(null, true);
+    cb(new Error('Hanya file gambar (JPG/PNG) yang diizinkan'), false);
   }
 });
 
@@ -95,6 +99,7 @@ async function initDB() {
       ['role', "VARCHAR(20) DEFAULT 'anggota'"],
       ['is_active', 'BOOLEAN DEFAULT true'],
       ['session_token', 'VARCHAR(64)'],
+      ['email', 'VARCHAR(150)'],
       ['created_at', 'TIMESTAMP DEFAULT NOW()']
     ];
     const usersAlterSQL = usersColumns
@@ -102,6 +107,9 @@ async function initDB() {
       .join('\n');
     await client.query(usersAlterSQL).catch((e) => console.log('users migration:', e.message));
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username)`).catch(() => {});
+    // Email hanya boleh 1 akun (unik), sama seperti NPM. NULL tetap boleh lebih dari satu
+    // (Postgres tidak menghitung NULL sebagai duplikat pada constraint UNIQUE).
+    await client.query(`ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email)`).catch((e) => console.log('email unique constraint:', e.message));
 
     // Perbaikan dinamis: longgarkan kolom NOT NULL legacy yang tidak kita kenal di tabel users
     try {
@@ -354,6 +362,27 @@ async function initDB() {
     // Unique constraint di user_id supaya bisa pakai ON CONFLICT (upsert) saat admin edit profil sendiri
     await client.query(`ALTER TABLE admin_profiles ADD CONSTRAINT admin_profiles_user_id_key UNIQUE (user_id)`).catch(() => {});
 
+    // Pengumuman/Berita untuk seluruh anggota
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pengumuman (
+        id SERIAL PRIMARY KEY,
+        judul VARCHAR(200) NOT NULL,
+        isi TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await migrateTableColumns(client, 'pengumuman', [
+      ['judul', 'VARCHAR(200)'],
+      ['isi', 'TEXT'],
+      ['is_active', 'BOOLEAN DEFAULT true'],
+      ['created_by', 'INTEGER REFERENCES users(id)'],
+      ['created_at', 'TIMESTAMP DEFAULT NOW()'],
+      ['updated_at', 'TIMESTAMP DEFAULT NOW()']
+    ]);
+
     // === Seed default accounts ===
     const sa = await client.query("SELECT id FROM users WHERE username = 'superadmin'");
     if (sa.rows.length === 0) {
@@ -466,7 +495,7 @@ app.post('/api/auth/register', upload.single('foto'), async (req, res) => {
   try {
     await client.query('BEGIN');
     const hash = await bcrypt.hash(password, 10);
-    const uRes = await client.query("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, 'anggota') RETURNING id", [username, hash]);
+    const uRes = await client.query("INSERT INTO users (username, password_hash, role, email) VALUES ($1, $2, 'anggota', $3) RETURNING id", [username, hash, email || null]);
     const tahun = new Date().getFullYear();
     const foto = req.file ? fileToBase64(req.file) : null;
     await client.query(
@@ -478,7 +507,12 @@ app.post('/api/auth/register', upload.single('foto'), async (req, res) => {
     res.json({ success: true, message: 'Registrasi berhasil! Silakan login dan tunggu persetujuan admin.' });
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') return res.status(400).json({ error: 'Username atau NPM sudah terdaftar' });
+    if (err.code === '23505') {
+      if (err.constraint === 'users_email_key') return res.status(400).json({ error: 'Email sudah terdaftar, gunakan email lain' });
+      if (err.constraint === 'anggota_npm_key') return res.status(400).json({ error: 'NPM sudah terdaftar' });
+      if (err.constraint === 'users_username_key') return res.status(400).json({ error: 'Username sudah digunakan' });
+      return res.status(400).json({ error: 'Username, NPM, atau Email sudah terdaftar' });
+    }
     res.status(500).json({ error: 'Server error: ' + err.message });
   } finally { client.release(); }
 });
@@ -549,6 +583,53 @@ app.post('/api/auth/logout', verifyToken, async (req, res) => {
 app.get('/api/auth/me', verifyToken, (req, res) => res.json({ user: req.user }));
 
 // =============================================
+// LUPA PASSWORD (verifikasi database langsung, tanpa kirim email)
+// =============================================
+// Anggota: dicocokkan lewat NPM + Email
+// Admin/Super Admin: dicocokkan lewat Username + Email
+// Kalau cocok, password langsung bisa diganti saat itu juga (satu langkah).
+app.post('/api/auth/reset-password-langsung', async (req, res) => {
+  const { role, identifier, email, password_baru } = req.body;
+  if (!role || !identifier || !email || !password_baru) {
+    return res.status(400).json({ error: 'Semua data wajib diisi' });
+  }
+  if (!['anggota', 'admin', 'superadmin'].includes(role)) return res.status(400).json({ error: 'Role tidak valid' });
+  if (password_baru.length < 6) return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+
+  try {
+    let userId = null;
+
+    if (role === 'anggota') {
+      const r = await pool.query(
+        `SELECT u.id FROM users u JOIN anggota a ON a.user_id = u.id
+         WHERE a.npm = $1 AND LOWER(a.email) = LOWER($2) AND u.role = 'anggota'`,
+        [identifier.trim(), email.trim()]
+      );
+      if (r.rows.length) userId = r.rows[0].id;
+    } else {
+      const r = await pool.query(
+        `SELECT id FROM users WHERE username = $1 AND LOWER(email) = LOWER($2) AND role = $3`,
+        [identifier.trim(), email.trim(), role]
+      );
+      if (r.rows.length) userId = r.rows[0].id;
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        error: role === 'anggota'
+          ? 'NPM dan Email tidak cocok dengan data yang terdaftar.'
+          : 'Username dan Email tidak cocok dengan data yang terdaftar.'
+      });
+    }
+
+    const hash = await bcrypt.hash(password_baru, 10);
+    // Set password baru + hapus session_token supaya semua sesi lama otomatis logout (keamanan)
+    await pool.query('UPDATE users SET password_hash=$1, session_token=NULL WHERE id=$2', [hash, userId]);
+    res.json({ success: true, message: 'Password berhasil diubah! Silakan login dengan password baru.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// =============================================
 // ANGGOTA ROUTES
 // =============================================
 
@@ -583,6 +664,13 @@ app.get('/api/anggota/profil', verifyToken, requireRole('anggota'), async (req, 
 app.put('/api/anggota/profil', verifyToken, requireRole('anggota'), upload.single('foto'), async (req, res) => {
   const { email, no_hp } = req.body;
   try {
+    // Update users.email dulu (di sini UNIQUE constraint dicek) — kalau bentrok, batalkan sebelum ubah data anggota
+    try {
+      await pool.query(`UPDATE users SET email=$1 WHERE id=$2`, [email || null, req.user.id]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(400).json({ error: 'Email sudah digunakan oleh akun lain' });
+      throw e;
+    }
     if (req.file) {
       await pool.query(`UPDATE anggota SET email=$1, no_hp=$2, foto_url=$3, updated_at=NOW() WHERE user_id=$4`,
         [email, no_hp, fileToBase64(req.file), req.user.id]);
@@ -762,6 +850,13 @@ app.put('/api/admin/profil', verifyToken, requireRole('admin'), async (req, res)
   const { nama, email, jabatan, no_hp } = req.body;
   if (!nama || !nama.trim()) return res.status(400).json({ error: 'Nama wajib diisi' });
   try {
+    // Update users.email dulu (di sini UNIQUE constraint dicek) — kalau bentrok, batalkan sebelum ubah profil
+    try {
+      await pool.query(`UPDATE users SET email=$1 WHERE id=$2`, [email || null, req.user.id]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(400).json({ error: 'Email sudah digunakan oleh akun lain' });
+      throw e;
+    }
     // Upsert: buat baris profil kalau belum ada, atau update kalau sudah ada — no_hp boleh dikosongkan.
     await pool.query(
       `INSERT INTO admin_profiles (user_id, nama, email, jabatan, no_hp)
@@ -1043,6 +1138,81 @@ app.put('/api/kontak', verifyToken, requireRole('admin', 'superadmin'), async (r
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// =============================================
+// PENGUMUMAN / BERITA
+// =============================================
+// Publik untuk anggota: hanya yang aktif, terbaru dulu
+app.get('/api/pengumuman', verifyToken, requireRole('anggota', 'admin', 'superadmin'), async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT p.id, p.judul, p.isi, p.created_at, p.updated_at
+       FROM pengumuman p WHERE p.is_active = true ORDER BY p.created_at DESC`
+    );
+    res.json(r.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Admin: lihat semua (termasuk yang nonaktif)
+app.get('/api/admin/pengumuman', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT p.*, u.username as dibuat_oleh FROM pengumuman p
+       LEFT JOIN users u ON u.id = p.created_by
+       ORDER BY p.created_at DESC`
+    );
+    res.json(r.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Admin: buat pengumuman baru
+app.post('/api/admin/pengumuman', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  const { judul, isi } = req.body;
+  if (!judul || !judul.trim()) return res.status(400).json({ error: 'Judul wajib diisi' });
+  if (!isi || !isi.trim()) return res.status(400).json({ error: 'Isi pengumuman wajib diisi' });
+  try {
+    const r = await pool.query(
+      `INSERT INTO pengumuman (judul, isi, created_by) VALUES ($1,$2,$3) RETURNING *`,
+      [judul.trim(), isi.trim(), req.user.id]
+    );
+    res.json({ success: true, pengumuman: r.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Admin: edit pengumuman
+app.put('/api/admin/pengumuman/:id', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  const { judul, isi } = req.body;
+  if (!judul || !judul.trim()) return res.status(400).json({ error: 'Judul wajib diisi' });
+  if (!isi || !isi.trim()) return res.status(400).json({ error: 'Isi pengumuman wajib diisi' });
+  try {
+    const r = await pool.query(
+      `UPDATE pengumuman SET judul=$1, isi=$2, updated_at=NOW() WHERE id=$3 RETURNING *`,
+      [judul.trim(), isi.trim(), req.params.id]
+    );
+    if (!r.rows.length) return res.status(404).json({ error: 'Pengumuman tidak ditemukan' });
+    res.json({ success: true, pengumuman: r.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Admin: toggle aktif/nonaktif
+app.put('/api/admin/pengumuman/:id/toggle', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  try {
+    const r = await pool.query(
+      `UPDATE pengumuman SET is_active = NOT is_active, updated_at=NOW() WHERE id=$1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!r.rows.length) return res.status(404).json({ error: 'Pengumuman tidak ditemukan' });
+    res.json({ success: true, pengumuman: r.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Admin: hapus pengumuman
+app.delete('/api/admin/pengumuman/:id', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  try {
+    await pool.query('DELETE FROM pengumuman WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Info pembayaran (admin update)
 app.put('/api/info-pembayaran', verifyToken, requireRole('admin', 'superadmin'), upload.single('qris'), async (req, res) => {
   const { nama_bank, nomor_rekening, atas_nama, nominal_iuran, nominal_perpanjangan, instruksi } = req.body;
@@ -1117,6 +1287,25 @@ app.put('/api/superadmin/ganti-password', verifyToken, requireRole('superadmin')
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Email untuk fitur lupa password Super Admin (SA tidak punya halaman profil terpisah)
+app.get('/api/superadmin/email', verifyToken, requireRole('superadmin'), async (req, res) => {
+  try {
+    const r = await pool.query('SELECT email FROM users WHERE id=$1', [req.user.id]);
+    res.json({ email: r.rows[0]?.email || '' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/superadmin/email', verifyToken, requireRole('superadmin'), async (req, res) => {
+  const { email } = req.body;
+  try {
+    await pool.query('UPDATE users SET email=$1 WHERE id=$2', [email || null, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'Email sudah digunakan oleh akun lain' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/superadmin/stats', verifyToken, requireRole('superadmin'), async (req, res) => {
   try {
     await syncExpiredStatus();
@@ -1127,6 +1316,26 @@ app.get('/api/superadmin/stats', verifyToken, requireRole('superadmin'), async (
     ]);
     res.json({ total: total.rows[0].count, aktif: aktif.rows[0].count, admins: admins.rows[0].count });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// =============================================
+// GLOBAL ERROR HANDLER (khusus upload file)
+// =============================================
+// Tanpa ini, error dari multer (ukuran file kebesaran, format ditolak)
+// akan dibalas Express sebagai halaman HTML, bukan JSON — yang membuat
+// frontend gagal parsing dan hanya menampilkan "Gagal terhubung ke server".
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Ukuran file terlalu besar. Maksimal 4MB, silakan kompres/perkecil foto dulu.' });
+    }
+    return res.status(400).json({ error: 'Gagal upload file: ' + err.message });
+  }
+  if (err && err.message) {
+    return res.status(400).json({ error: err.message });
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Terjadi kesalahan pada server' });
 });
 
 // =============================================

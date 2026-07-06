@@ -30,6 +30,14 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
 .pw-toggle{position:absolute;right:2px;top:2px;bottom:2px;background:transparent;border:none;
   cursor:pointer;font-size:1.1rem;padding:0 12px;color:var(--gray);opacity:.75;transition:.2s}
 .pw-toggle:hover{opacity:1;color:var(--gold)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--navy2);border-radius:14px;padding:28px;max-width:400px;width:100%;border:1px solid var(--navy3)}
+.modal-box h3{color:var(--gold);margin-bottom:8px;font-size:1.05rem}
+.modal-box p{color:var(--gray);font-size:.83rem;margin-bottom:16px;line-height:1.5}
+.modal-footer{display:flex;gap:10px;margin-top:6px}
+.btn-outline-modal{flex:1;background:transparent;border:1px solid var(--navy3);color:var(--gray);padding:11px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.alert-success-modal{background:rgba(40,167,69,.15);border:1px solid #28a745;color:#5dd87a;padding:11px 14px;border-radius:8px;margin-top:12px;font-size:.85rem;display:none}
 </style>
 </head>
 <body>
@@ -56,7 +64,48 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
   <div id="kick-msg" style="padding:11px 14px;border-radius:8px;margin-bottom:10px;font-size:.88rem;display:none"></div>
   <div class="alert" id="alert-err"></div>
   <button class="btn" id="btn-login" onclick="login()">Login Super Admin</button>
-  <div class="links"><a href="/admin/login.html">Login sebagai Admin biasa</a></div>
+  <div class="links">
+    <a href="/admin/login.html">Login sebagai Admin biasa</a> •
+    <a href="#" onclick="openForgotModal();return false;">Lupa Password?</a>
+  </div>
+</div>
+
+<!-- MODAL LUPA PASSWORD -->
+<div class="modal-overlay" id="modal-forgot">
+  <div class="modal-box">
+    <h3>🔑 Lupa Password</h3>
+    <p>Masukkan Username dan Email yang sudah diatur untuk akun Super Admin, lalu buat password baru.</p>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="forgot-identifier" placeholder="superadmin">
+    </div>
+    <div class="form-group">
+      <label>Email Terdaftar</label>
+      <input type="email" id="forgot-email" placeholder="email yang terdaftar">
+    </div>
+    <div class="form-group">
+      <label>Password Baru</label>
+      <div class="pw-wrap">
+        <input type="password" id="forgot-pw-baru" placeholder="minimal 6 karakter">
+        <button type="button" class="pw-toggle" onclick="togglePw('forgot-pw-baru',this)">👁️</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Konfirmasi Password Baru</label>
+      <div class="pw-wrap">
+        <input type="password" id="forgot-pw-konfirm" placeholder="ulangi password baru">
+        <button type="button" class="pw-toggle" onclick="togglePw('forgot-pw-konfirm',this)">👁️</button>
+      </div>
+    </div>
+    <div class="alert" id="forgot-err"></div>
+    <div class="alert-success-modal" id="forgot-ok"></div>
+    <div class="modal-footer">
+      <button class="btn" id="btn-forgot-submit" onclick="submitForgot()" style="margin-top:0">Ganti Password</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-modal" onclick="closeForgotModal()">Tutup</button>
+    </div>
+  </div>
 </div>
 <script>
 function togglePw(id, btn){
@@ -87,6 +136,46 @@ async function login(){
   }catch(e){err.textContent='Gagal terhubung ke server';err.style.display='block';}
   finally{btn.disabled=false;btn.textContent='Login Super Admin';}
 }
+
+function openForgotModal(){
+  document.getElementById('forgot-identifier').value='';
+  document.getElementById('forgot-email').value='';
+  document.getElementById('forgot-pw-baru').value='';
+  document.getElementById('forgot-pw-konfirm').value='';
+  document.getElementById('forgot-err').style.display='none';
+  document.getElementById('forgot-ok').style.display='none';
+  document.getElementById('btn-forgot-submit').style.display='inline-block';
+  document.getElementById('modal-forgot').classList.add('show');
+}
+function closeForgotModal(){
+  document.getElementById('modal-forgot').classList.remove('show');
+}
+async function submitForgot(){
+  const err=document.getElementById('forgot-err');
+  const ok=document.getElementById('forgot-ok');
+  err.style.display=ok.style.display='none';
+  const identifier=document.getElementById('forgot-identifier').value.trim();
+  const email=document.getElementById('forgot-email').value.trim();
+  const pw1=document.getElementById('forgot-pw-baru').value;
+  const pw2=document.getElementById('forgot-pw-konfirm').value;
+  if(!identifier){err.textContent='Username wajib diisi!';err.style.display='block';return;}
+  if(!email){err.textContent='Email wajib diisi!';err.style.display='block';return;}
+  if(!pw1||pw1.length<6){err.textContent='Password baru minimal 6 karakter!';err.style.display='block';return;}
+  if(pw1!==pw2){err.textContent='Konfirmasi password tidak cocok!';err.style.display='block';return;}
+  const btn=document.getElementById('btn-forgot-submit');
+  btn.disabled=true;btn.textContent='Memproses...';
+  try{
+    const res=await fetch('/api/auth/reset-password-langsung',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({role:'superadmin',identifier,email,password_baru:pw1})
+    });
+    const d=await res.json();
+    if(!res.ok){err.textContent=d.error;err.style.display='block';}
+    else{ok.textContent='✅ '+d.message;ok.style.display='block';btn.style.display='none';}
+  }catch(e){err.textContent='Gagal terhubung ke server';err.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='Ganti Password';}
+}
+document.getElementById('modal-forgot').addEventListener('click',e=>{if(e.target===e.currentTarget)closeForgotModal();});
 </script>
 </body>
 </html>

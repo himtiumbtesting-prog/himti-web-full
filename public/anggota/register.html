@@ -114,7 +114,7 @@ select option{background:var(--navy2)}
     </div>
     <div class="form-group">
       <label>Foto Profil</label>
-      <input type="file" id="foto" accept="image/*">
+      <input type="file" id="foto" accept="image/*" onchange="himtiValidateFile(this)">
     </div>
     <div class="alert alert-success" id="alert-ok"></div>
     <div class="alert alert-danger" id="alert-err"></div>

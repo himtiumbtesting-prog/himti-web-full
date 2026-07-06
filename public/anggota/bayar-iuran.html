@@ -23,7 +23,7 @@
   </div>
   <div class="card" id="form-upload">
     <div class="card-title">📤 Upload Bukti Pembayaran</div>
-    <div class="form-group"><label class="form-label">Foto Bukti Transfer *</label><input type="file" id="bukti" accept="image/*"></div>
+    <div class="form-group"><label class="form-label">Foto Bukti Transfer *</label><input type="file" id="bukti" accept="image/*" onchange="himtiValidateFile(this)"></div>
     <div class="form-group"><label class="form-label">Catatan (opsional)</label><input type="text" id="catatan" placeholder="contoh: transfer via BRI mobile"></div>
     <div class="alert alert-success" id="ok"></div>
     <div class="alert alert-danger" id="err"></div>

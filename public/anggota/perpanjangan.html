@@ -168,7 +168,7 @@ textarea{resize:vertical;min-height:80px}
       <p class="form-sub">Upload bukti pembayaran perpanjangan iuran, kemudian admin akan memproses dalam 1-3 hari kerja</p>
       <div class="form-group">
         <label>Bukti Pembayaran <span style="color:var(--gold)">*</span></label>
-        <input type="file" id="bukti" accept="image/*">
+        <input type="file" id="bukti" accept="image/*" onchange="himtiValidateFile(this)">
       </div>
       <div class="form-group">
         <label>Catatan (opsional)</label>

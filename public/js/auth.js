@@ -189,4 +189,43 @@
   });
 })();
 
+/**
+ * himtiValidateFile - Cek format & ukuran file SEBELUM dikirim ke server.
+ * Mencegah error "Gagal terhubung ke server" yang membingungkan saat file
+ * terlalu besar atau format HEIC/HEIF (foto iPhone) yang tidak didukung browser.
+ * Pakai: <input type="file" onchange="himtiValidateFile(this)">
+ */
+window.himtiValidateFile = function (inputEl, maxMB) {
+  maxMB = maxMB || 4;
+  const file = inputEl.files[0];
+  if (!file) return true;
+
+  const isHeic = /\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
+  if (isHeic) {
+    alert(
+      '⚠️ Format HEIC/HEIF (foto iPhone) belum didukung.\n\n' +
+      'Cara mengatasi di iPhone:\n' +
+      '1. Buka Pengaturan > Kamera > Format\n' +
+      '2. Pilih "Kompatibel Paling Luas"\n' +
+      '3. Ambil foto baru, lalu upload lagi\n\n' +
+      'Atau: screenshot foto yang sudah ada, lalu upload hasil screenshot-nya (otomatis format JPG/PNG).'
+    );
+    inputEl.value = '';
+    return false;
+  }
+
+  const maxBytes = maxMB * 1024 * 1024;
+  if (file.size > maxBytes) {
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    alert(
+      `⚠️ Ukuran file terlalu besar (${sizeMB}MB).\n\n` +
+      `Maksimal ${maxMB}MB. Silakan kompres foto dulu atau ambil foto dengan resolusi lebih rendah.`
+    );
+    inputEl.value = '';
+    return false;
+  }
+
+  return true;
+};
+
 

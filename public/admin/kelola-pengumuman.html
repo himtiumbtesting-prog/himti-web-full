@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Pengumuman - HIMTI UMB</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<script src="/js/auth.js"></script>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-inner"><div class="logo-circle">H</div><div><div class="logo-title">HIMTI UMB</div><div class="logo-sub">Panel Admin</div></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <a href="/admin/dashboard.html" id="link-dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/kelola-anggota.html"><span class="icon">👥</span> Kelola Anggota</a>
+    <a href="/admin/kelola-pembayaran.html"><span class="icon">💳</span> Kelola Iuran</a>
+    <a href="/admin/kelola-perpanjangan.html"><span class="icon">🔄</span> Perpanjangan</a>
+    <a href="/admin/kelola-presensi.html"><span class="icon">📅</span> Kelola Presensi</a>
+    <a href="/admin/kelola-pengumuman.html" class="active"><span class="icon">📢</span> Pengumuman</a>
+    <div class="nav-section">Pengaturan</div>
+    <a href="/admin/kontak.html"><span class="icon">📞</span> Kontak HIMTI</a>
+    <a href="/admin/profil.html" id="link-profil-saya"><span class="icon">👤</span> Profil Saya</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">Login sebagai<strong id="admin-nama">Admin</strong></div>
+    <button class="btn-logout" onclick="himtiLogout()">⬅ Keluar</button>
+  </div>
+</aside>
+<div class="main-wrap">
+  <div class="topbar"><div class="page-title">Kelola <span>Pengumuman</span></div></div>
+  <div class="content">
+    <div style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.88rem;color:var(--gray)">
+      ℹ️ Pengumuman yang <strong style="color:var(--white)">Aktif</strong> akan langsung terlihat oleh seluruh anggota di dashboard mereka. Nonaktifkan untuk menyembunyikan tanpa menghapus.
+    </div>
+
+    <!-- FORM BUAT/EDIT -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header"><span class="table-title" id="form-title">📢 Buat Pengumuman Baru</span></div>
+      <div style="padding:20px">
+        <div class="form-group">
+          <label class="form-label">Judul <span style="color:var(--gold)">*</span></label>
+          <input type="text" id="judul" style="width:100%" placeholder="contoh: Rapat Rutin Bulan Ini">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Isi Pengumuman <span style="color:var(--gold)">*</span></label>
+          <textarea id="isi" rows="5" style="width:100%" placeholder="Tuliskan isi pengumuman lengkap di sini..."></textarea>
+        </div>
+        <div class="alert alert-success" id="ok"></div>
+        <div class="alert alert-danger" id="err"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-gold" id="btn-simpan" onclick="simpan()">📢 Kirim Pengumuman</button>
+          <button class="btn btn-outline" id="btn-batal" onclick="batalEdit()" style="display:none">✖ Batal Edit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAFTAR PENGUMUMAN -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">📋 Semua Pengumuman</span>
+        <span id="jumlah-label" style="color:var(--gray);font-size:.82rem"></span>
+      </div>
+      <div id="loading"><div class="spinner"></div></div>
+      <div id="list-wrap" style="padding:16px;display:none"></div>
+      <div class="empty" id="empty" style="display:none">Belum ada pengumuman dibuat.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KONFIRMASI HAPUS -->
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal" style="max-width:400px">
+    <h3>⚠️ Hapus Pengumuman</h3>
+    <p style="color:var(--gray);margin-bottom:16px;font-size:.9rem">Yakin ingin menghapus pengumuman <strong id="hapus-judul" style="color:var(--white)"></strong>? Tindakan ini tidak bisa dibatalkan.</p>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="hapusPengumuman()">🗑️ Hapus</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-hapus').classList.remove('show')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.peng-item{background:var(--navy3);border-radius:12px;padding:16px 18px;margin-bottom:12px;border:1px solid rgba(255,255,255,.05)}
+.peng-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.peng-judul{font-weight:700;font-size:.98rem;color:var(--white)}
+.peng-isi{color:var(--gray);font-size:.85rem;line-height:1.6;white-space:pre-wrap;margin-bottom:10px}
+.peng-meta{color:var(--gray);font-size:.75rem;margin-bottom:10px}
+.peng-actions{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+
+<script>
+const token = sessionStorage.getItem('himti_token');
+const role = sessionStorage.getItem('himti_role');
+if (!token || (role !== 'admin' && role !== 'superadmin')) window.location.href = '/admin/login.html';
+document.getElementById('admin-nama').textContent = sessionStorage.getItem('himti_nama') || 'Admin';
+
+if (role === 'superadmin') {
+  const profilLink = document.getElementById('link-profil-saya');
+  if (profilLink) profilLink.remove();
+  const dashLink = document.getElementById('link-dashboard');
+  if (dashLink) {
+    dashLink.href = '/superadmin/dashboard.html';
+    dashLink.innerHTML = '<span class="icon">📊</span> Dashboard SA';
+    const kelolaAdminLink = document.createElement('a');
+    kelolaAdminLink.href = '/superadmin/kelola-admin.html';
+    kelolaAdminLink.innerHTML = '<span class="icon">👤</span> Kelola Admin';
+    dashLink.insertAdjacentElement('afterend', kelolaAdminLink);
+  }
+  const logoSub = document.querySelector('.logo-sub');
+  if (logoSub) logoSub.textContent = 'Super Admin';
+}
+
+let allData = [];
+let editingId = null;
+
+function fmtDT(d) { return d ? new Date(d).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-'; }
+
+async function load() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('list-wrap').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
+  try {
+    const res = await fetch('/api/admin/pengumuman', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    allData = data;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('jumlah-label').textContent = data.length + ' pengumuman';
+    if (!data.length) { document.getElementById('empty').style.display = 'block'; return; }
+
+    document.getElementById('list-wrap').innerHTML = data.map(p => `
+      <div class="peng-item">
+        <div class="peng-head">
+          <div class="peng-judul">${escapeHtml(p.judul)}</div>
+          <span class="badge ${p.is_active ? 'badge-aktif' : 'badge-nonaktif'}">${p.is_active ? '🟢 Aktif' : '⚫ Nonaktif'}</span>
+        </div>
+        <div class="peng-isi">${escapeHtml(p.isi)}</div>
+        <div class="peng-meta">Dibuat: ${fmtDT(p.created_at)}${p.updated_at && p.updated_at !== p.created_at ? ' • Diedit: ' + fmtDT(p.updated_at) : ''}</div>
+        <div class="peng-actions">
+          <button class="btn btn-outline btn-sm" onclick="editPengumuman(${p.id})">✏️ Edit</button>
+          <button class="btn ${p.is_active ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleAktif(${p.id})">${p.is_active ? '⚫ Nonaktifkan' : '🟢 Aktifkan'}</button>
+          <button class="btn btn-danger btn-sm" onclick="konfirmasiHapus(${p.id})">🗑️ Hapus</button>
+        </div>
+      </div>`).join('');
+    document.getElementById('list-wrap').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('empty').textContent = 'Gagal memuat data.';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function simpan() {
+  const ok = document.getElementById('ok');
+  const err = document.getElementById('err');
+  ok.style.display = err.style.display = 'none';
+  const judul = document.getElementById('judul').value.trim();
+  const isi = document.getElementById('isi').value.trim();
+  if (!judul) { err.textContent = 'Judul wajib diisi!'; err.style.display = 'block'; return; }
+  if (!isi) { err.textContent = 'Isi pengumuman wajib diisi!'; err.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btn-simpan');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  const url = editingId ? `/api/admin/pengumuman/${editingId}` : '/api/admin/pengumuman';
+  const method = editingId ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ judul, isi })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else {
+      ok.textContent = editingId ? '✅ Pengumuman berhasil diperbarui!' : '✅ Pengumuman berhasil dikirim ke seluruh anggota!';
+      ok.style.display = 'block';
+      batalEdit();
+      load();
+    }
+  } catch (e) { err.textContent = 'Gagal menyimpan.'; err.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = editingId ? '💾 Simpan Perubahan' : '📢 Kirim Pengumuman'; }
+}
+
+function editPengumuman(id) {
+  const p = allData.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('judul').value = p.judul;
+  document.getElementById('isi').value = p.isi;
+  document.getElementById('form-title').textContent = '✏️ Edit Pengumuman';
+  document.getElementById('btn-simpan').textContent = '💾 Simpan Perubahan';
+  document.getElementById('btn-batal').style.display = 'inline-block';
+  document.getElementById('ok').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function batalEdit() {
+  editingId = null;
+  document.getElementById('judul').value = '';
+  document.getElementById('isi').value = '';
+  document.getElementById('form-title').textContent = '📢 Buat Pengumuman Baru';
+  document.getElementById('btn-simpan').textContent = '📢 Kirim Pengumuman';
+  document.getElementById('btn-batal').style.display = 'none';
+}
+
+async function toggleAktif(id) {
+  try {
+    const res = await fetch(`/api/admin/pengumuman/${id}/toggle`, { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
+    if (res.ok) load();
+    else alert('Gagal mengubah status.');
+  } catch (e) { alert('Gagal mengubah status.'); }
+}
+
+let selectedHapusId = null;
+function konfirmasiHapus(id) {
+  const p = allData.find(x => x.id === id);
+  selectedHapusId = id;
+  document.getElementById('hapus-judul').textContent = p ? p.judul : '';
+  document.getElementById('modal-hapus').classList.add('show');
+}
+
+async function hapusPengumuman() {
+  if (!selectedHapusId) return;
+  try {
+    const res = await fetch(`/api/admin/pengumuman/${selectedHapusId}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+    if (res.ok) { document.getElementById('modal-hapus').classList.remove('show'); load(); }
+    else alert('Gagal menghapus.');
+  } catch (e) { alert('Gagal menghapus.'); }
+}
+
+document.getElementById('modal-hapus').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+
+load();
+</script>
+</body>
+</html>
