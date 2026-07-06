@@ -950,6 +950,30 @@ app.put('/api/admin/anggota/:id/aktivasi', verifyToken, requireRole('admin', 'su
   } finally { client.release(); }
 });
 
+// Hapus anggota secara PERMANEN (misal: NPM salah input, atau pakai NPM orang lain).
+// Ikut menghapus akun login, riwayat pembayaran, perpanjangan, dan presensi anggota tsb.
+// Tidak bisa dibatalkan setelah dihapus.
+app.delete('/api/admin/anggota/:id', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const angg = await client.query('SELECT user_id, nama, npm FROM anggota WHERE id=$1', [req.params.id]);
+    if (!angg.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Anggota tidak ditemukan' });
+    }
+    // Presensi tidak punya ON DELETE CASCADE, jadi dihapus manual dulu
+    await client.query('DELETE FROM presensi WHERE anggota_id=$1', [req.params.id]);
+    // Hapus akun user → otomatis cascade hapus data anggota, pembayaran, dan perpanjangan terkait
+    await client.query('DELETE FROM users WHERE id=$1', [angg.rows[0].user_id]);
+    await client.query('COMMIT');
+    res.json({ success: true, message: `Anggota "${angg.rows[0].nama}" (NPM: ${angg.rows[0].npm}) berhasil dihapus permanen.` });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
+});
+
 // Export Excel
 app.get('/api/admin/anggota/export-excel', verifyToken, requireRole('admin', 'superadmin'), async (req, res) => {
   const { tahun } = req.query;

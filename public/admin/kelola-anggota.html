@@ -102,10 +102,29 @@
     <div class="modal-footer">
       <button class="btn btn-success btn-sm" id="btn-aktifkan" onclick="aksi('aktifkan')">✅ Aktifkan</button>
       <button class="btn btn-danger btn-sm" id="btn-nonaktif" onclick="aksi('nonaktifkan')">⛔ Nonaktifkan</button>
+      <button class="btn btn-danger btn-sm" onclick="konfirmasiHapus()">🗑️ Hapus Permanen</button>
       <button class="btn btn-outline btn-sm" onclick="closeModal()">Tutup</button>
     </div>
     <div class="alert alert-success" id="modal-ok"></div>
     <div class="alert alert-danger" id="modal-err"></div>
+  </div>
+</div>
+
+<!-- MODAL KONFIRMASI HAPUS PERMANEN -->
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal" style="max-width:420px">
+    <h3>⚠️ Hapus Anggota Permanen</h3>
+    <p style="color:var(--gray);font-size:.9rem;margin-bottom:10px">
+      Yakin ingin menghapus <strong style="color:var(--white)" id="hapus-nama"></strong> (NPM: <strong style="color:var(--gold)" id="hapus-npm"></strong>) secara <strong style="color:var(--danger)">permanen</strong>?
+    </p>
+    <p style="color:var(--gray);font-size:.82rem;margin-bottom:16px">
+      Akun login, riwayat pembayaran, perpanjangan, dan presensi anggota ini akan ikut terhapus. Cocok dipakai untuk NPM yang salah input atau memakai NPM orang lain. <strong>Tindakan ini tidak bisa dibatalkan.</strong>
+    </p>
+    <div class="alert alert-danger" id="hapus-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-konfirmasi-hapus" onclick="prosesHapus()">🗑️ Ya, Hapus Permanen</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-hapus').classList.remove('show')">Batal</button>
+    </div>
   </div>
 </div>
 
@@ -235,6 +254,38 @@ async function aksi(action) {
   } catch (e) { err.textContent = 'Gagal'; err.style.display = 'block'; }
 }
 
+function konfirmasiHapus() {
+  if (!selectedId) return;
+  const a = currentData.find(x => x.id === selectedId);
+  if (!a) return;
+  document.getElementById('hapus-nama').textContent = a.nama;
+  document.getElementById('hapus-npm').textContent = a.npm;
+  document.getElementById('hapus-err').style.display = 'none';
+  document.getElementById('modal-hapus').classList.add('show');
+}
+
+async function prosesHapus() {
+  if (!selectedId) return;
+  const err = document.getElementById('hapus-err');
+  err.style.display = 'none';
+  const btn = document.getElementById('btn-konfirmasi-hapus');
+  btn.disabled = true; btn.textContent = 'Menghapus...';
+  try {
+    const res = await fetch(`/api/admin/anggota/${selectedId}`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else {
+      document.getElementById('modal-hapus').classList.remove('show');
+      closeModal();
+      loadAnggota();
+    }
+  } catch (e) { err.textContent = 'Gagal menghapus.'; err.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = '🗑️ Ya, Hapus Permanen'; }
+}
+
 function exportExcel() {
   const q = document.getElementById('f-q').value.trim();
   const status = document.getElementById('f-status').value;
@@ -259,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 loadAnggota();
 document.getElementById('modal-detail').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('modal-hapus').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
 
 // Fix: add token to export URL via fetch for download
 async function downloadExcel(url) {
