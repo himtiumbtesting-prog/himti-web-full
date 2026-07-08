@@ -1363,12 +1363,14 @@ app.use((err, req, res, next) => {
 });
 
 // =============================================
-// START
+// START (disesuaikan untuk cPanel Node.js Selector / Passenger)
 // =============================================
+// PENTING: tidak pakai pengecekan "require.main === module" lagi (itu khusus
+// kebutuhan Vercel serverless). cPanel/Passenger menjalankan file ini sebagai
+// startup file dan mengharapkan app benar-benar listen ke process.env.PORT
+// yang mereka sediakan otomatis.
 initDB().then(() => {
-  if (require.main === module) {
-    app.listen(PORT, () => console.log(`🚀 HIMTI Server running on port ${PORT}`));
-  }
+  app.listen(PORT, () => console.log(`🚀 HIMTI Server running on port ${PORT}`));
 });
 
 module.exports = app;

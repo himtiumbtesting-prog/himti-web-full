@@ -11,18 +11,18 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
 
 /* ── TOP BAR ── */
-.topbar{background:var(--navy2);padding:0 20px;height:56px;display:flex;align-items:center;
+.topbar{background:var(--navy2);padding:0 16px;height:56px;display:flex;align-items:center;
         justify-content:space-between;position:sticky;top:0;z-index:100;
-        border-bottom:2px solid var(--gold)}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-logo{width:34px;height:34px;background:var(--gold);border-radius:50%;display:flex;
-            align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy)}
-.brand-name{font-weight:800;font-size:1rem;color:var(--gold)}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.topbar-user{font-size:.82rem;color:#94a3b8}
+        border-bottom:2px solid var(--gold);gap:8px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0}
+.brand-logo{width:34px;height:34px;min-width:34px;background:var(--gold);border-radius:50%;display:flex;
+            align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy);flex-shrink:0}
+.brand-name{font-weight:800;font-size:1rem;color:var(--gold);white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar-user{font-size:.82rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
 .topbar-user strong{color:var(--white)}
 .btn-logout{background:transparent;border:1px solid rgba(239,68,68,.4);color:#ef4444;
-            padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;transition:.2s}
+            padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;transition:.2s;flex-shrink:0;white-space:nowrap}
 .btn-logout:hover{background:#ef4444;color:#fff}
 
 /* ── LAYOUT ── */

@@ -7,15 +7,21 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#0a1628;--navy2:#0d1f3c;--navy3:#1a2f4e;--gold:#c9a227;--gold2:#f0c040;--white:#fff;--gray:#a0aec0;--danger:#dc3545;--success:#28a745}
 body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
-header{background:var(--navy2);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold)}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-circle{width:42px;height:42px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:var(--navy)}
-.logo h1{font-size:1.2rem;color:var(--gold);font-weight:800}
-.logo p{font-size:.7rem;color:var(--gray)}
-header a{color:var(--gray);text-decoration:none;font-size:.9rem}
+header{background:var(--navy2);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold);gap:8px}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-circle{width:42px;height:42px;min-width:42px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:var(--navy);flex-shrink:0}
+.logo h1{font-size:1.2rem;color:var(--gold);font-weight:800;white-space:nowrap}
+.logo p{font-size:.7rem;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header a{color:var(--gray);text-decoration:none;font-size:.9rem;flex-shrink:0;white-space:nowrap}
 header a:hover{color:var(--gold)}
 .container{max-width:900px;margin:40px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:30px}
-@media(max-width:700px){.container{grid-template-columns:1fr}}
+@media(max-width:700px){.container{grid-template-columns:1fr;margin:20px auto}}
+@media(max-width:420px){
+  header{padding:12px 14px}
+  .logo h1{font-size:1.05rem}
+  .logo p{display:none}
+  .logo-circle{width:36px;height:36px;min-width:36px;font-size:13px}
+}
 .form-card{background:var(--navy2);border-radius:14px;padding:30px;border:1px solid var(--navy3)}
 .form-title{font-size:1.4rem;font-weight:800;color:var(--gold);margin-bottom:6px}
 .form-sub{color:var(--gray);font-size:.85rem;margin-bottom:24px}

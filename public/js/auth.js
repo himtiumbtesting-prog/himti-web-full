@@ -186,6 +186,38 @@
       resetIdleTimer();
       startPolling();
     }
+
+    // ─── MOBILE HAMBURGER MENU ───────────────────────────────────────────
+    // Otomatis nambahin tombol ☰ di halaman yang punya sidebar (admin/superadmin),
+    // supaya menu tetap bisa dibuka di layar HP. Tidak perlu edit tiap halaman satu-satu.
+    const sidebar = document.querySelector('.sidebar');
+    const topbar = document.querySelector('.topbar');
+    if (sidebar && topbar) {
+      const hamburger = document.createElement('button');
+      hamburger.className = 'himti-hamburger';
+      hamburger.innerHTML = '☰';
+      hamburger.setAttribute('aria-label', 'Buka menu');
+      topbar.insertBefore(hamburger, topbar.firstChild);
+
+      const backdrop = document.createElement('div');
+      backdrop.className = 'himti-sidebar-backdrop';
+      document.body.appendChild(backdrop);
+
+      function toggleMobileSidebar() {
+        sidebar.classList.toggle('himti-mobile-open');
+        backdrop.classList.toggle('show');
+      }
+      hamburger.addEventListener('click', toggleMobileSidebar);
+      backdrop.addEventListener('click', toggleMobileSidebar);
+
+      // Auto-tutup sidebar saat salah satu link menu diklik
+      sidebar.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          sidebar.classList.remove('himti-mobile-open');
+          backdrop.classList.remove('show');
+        });
+      });
+    }
   });
 })();
 

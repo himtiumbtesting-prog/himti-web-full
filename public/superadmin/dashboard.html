@@ -98,6 +98,20 @@
           <button class="btn btn-gold" style="width:100%" onclick="gantiPassword()">🔐 Ganti Password</button>
         </div>
       </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">📧 Email untuk Lupa Password</span></div>
+        <div style="padding:20px">
+          <p style="color:var(--gray);font-size:.83rem;margin-bottom:14px">Wajib diisi supaya fitur "Lupa Password" bisa mengirim link reset ke email ini kalau suatu saat lupa password Super Admin.</p>
+          <div class="form-group">
+            <label class="form-label">Email Kamu</label>
+            <input type="email" id="sa-email" style="width:100%" placeholder="email untuk reset password">
+          </div>
+          <div class="alert alert-success" id="email-ok"></div>
+          <div class="alert alert-danger" id="email-err"></div>
+          <button class="btn btn-gold" style="width:100%" onclick="simpanEmail()">💾 Simpan Email</button>
+        </div>
+      </div>
     </div>
 
     <!-- INISIASI DB -->
@@ -164,7 +178,32 @@ async function initDB() {
   finally { btn.disabled = false; btn.textContent = '🔄 Re-inisialisasi DB'; }
 }
 
+async function loadEmail() {
+  try {
+    const r = await fetch('/api/superadmin/email', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    document.getElementById('sa-email').value = d.email || '';
+  } catch (e) {}
+}
+
+async function simpanEmail() {
+  const ok = document.getElementById('email-ok'); const err = document.getElementById('email-err');
+  ok.style.display = err.style.display = 'none';
+  const email = document.getElementById('sa-email').value.trim();
+  try {
+    const res = await fetch('/api/superadmin/email', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const d = await res.json();
+    if (!res.ok) { err.textContent = d.error; err.style.display = 'block'; }
+    else { ok.textContent = '✅ Email berhasil disimpan!'; ok.style.display = 'block'; }
+  } catch (e) { err.textContent = 'Gagal menyimpan.'; err.style.display = 'block'; }
+}
+
 loadStats();
+loadEmail();
 </script>
 </body>
 </html>
