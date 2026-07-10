@@ -31,7 +31,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
 .kartu::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold))}
 .kartu-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
 .kartu-org{font-size:.65rem;color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:.08em;line-height:1.5}
-.kartu-logo{width:40px;height:40px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--navy);flex-shrink:0}
+.kartu-logo{width:40px;height:40px;object-fit:contain;flex-shrink:0}
 .kartu-body{display:flex;gap:16px;align-items:flex-start}
 .kartu-foto{width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid var(--gold);background:rgba(255,255,255,.05);flex-shrink:0}
 .kartu-foto-ph{width:72px;height:72px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
@@ -75,7 +75,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
 <script src="/js/auth.js"></script>
 <nav class="topnav">
   <div class="nav-left">
-    <div class="logo-circle">H</div>
+    <img src="/assets/logo-himti.png" class="logo-circle" alt="Logo HIMTI UMB">
     <span class="nav-brand">HIMTI UMB</span>
   </div>
   <div class="nav-right">
@@ -104,7 +104,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
         <div class="kartu-org">
           Himpunan Mahasiswa<br>Teknik Informatika<br><strong>Universitas Muhammadiyah Bengkulu</strong>
         </div>
-        <div class="kartu-logo">H</div>
+        <img src="/assets/logo-himti.png" class="kartu-logo" alt="Logo HIMTI UMB">
       </div>
       <div class="kartu-body">
         <div id="foto-wrap"><div class="kartu-foto-ph">👤</div></div>

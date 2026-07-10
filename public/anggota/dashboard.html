@@ -15,8 +15,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1a202
         justify-content:space-between;position:sticky;top:0;z-index:100;
         border-bottom:2px solid var(--gold);gap:8px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0}
-.brand-logo{width:34px;height:34px;min-width:34px;background:var(--gold);border-radius:50%;display:flex;
-            align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy);flex-shrink:0}
+.brand-logo{width:34px;height:34px;min-width:34px;object-fit:contain;flex-shrink:0}
 .brand-name{font-weight:800;font-size:1rem;color:var(--gold);white-space:nowrap}
 .topbar-right{display:flex;align-items:center;gap:10px;min-width:0}
 .topbar-user{font-size:.82rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
@@ -96,7 +95,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1a202
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">
-    <div class="brand-logo">H</div>
+    <img src="/assets/logo-himti.png" class="brand-logo" alt="Logo HIMTI UMB">
     <span class="brand-name">HIMTI UMB</span>
   </div>
   <div class="topbar-right">

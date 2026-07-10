@@ -11,7 +11,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--white)
 .back:hover{color:var(--gold)}
 .card{background:var(--navy2);border-radius:16px;padding:40px;width:100%;max-width:420px;border:1px solid var(--navy3)}
 .logo-area{text-align:center;margin-bottom:30px}
-.logo-circle{width:64px;height:64px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:var(--navy);margin:0 auto 12px}
+.logo-circle{width:64px;height:64px;object-fit:contain;margin:0 auto 12px}
 h1{font-size:1.5rem;color:var(--gold);margin-bottom:4px}
 .sub{color:var(--gray);font-size:.85rem}
 .form-group{margin-bottom:18px}
@@ -41,7 +41,7 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
 @media(max-width:420px){
   .card{padding:26px 20px}
   .modal-box{padding:20px}
-  .logo-circle{width:54px;height:54px;font-size:19px}
+  .logo-circle{width:54px;height:54px}
 }
 </style>
 </head>
@@ -50,7 +50,7 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.15)}
 <a href="/index.html" class="back">← Beranda</a>
 <div class="card">
   <div class="logo-area">
-    <div class="logo-circle">H</div>
+    <img src="/assets/logo-himti.png" class="logo-circle" alt="Logo HIMTI UMB">
     <h1>HIMTI UMB</h1>
     <p class="sub">Login Anggota</p>
   </div>

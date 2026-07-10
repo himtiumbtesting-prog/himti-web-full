@@ -100,6 +100,8 @@ async function initDB() {
       ['is_active', 'BOOLEAN DEFAULT true'],
       ['session_token', 'VARCHAR(64)'],
       ['email', 'VARCHAR(150)'],
+      ['failed_attempts', 'INTEGER DEFAULT 0'],
+      ['locked_until', 'TIMESTAMP'],
       ['created_at', 'TIMESTAMP DEFAULT NOW()']
     ];
     const usersAlterSQL = usersColumns
@@ -478,6 +480,40 @@ function requireRole(...roles) {
   };
 }
 
+// =============================================
+// PROTEKSI BRUTE FORCE LOGIN
+// =============================================
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
+// Cek apakah akun sedang terkunci. Return null kalau boleh lanjut,
+// atau pesan error kalau masih terkunci.
+async function checkLockout(userRow) {
+  if (userRow.locked_until && new Date(userRow.locked_until) > new Date()) {
+    const sisaMenit = Math.ceil((new Date(userRow.locked_until) - new Date()) / 60000);
+    return `Terlalu banyak percobaan gagal. Akun terkunci sementara, coba lagi dalam ${sisaMenit} menit.`;
+  }
+  return null;
+}
+
+// Catat 1 percobaan gagal. Kalau sudah mencapai batas, kunci akun sementara.
+async function recordFailedAttempt(userId) {
+  const r = await pool.query(
+    `UPDATE users SET failed_attempts = COALESCE(failed_attempts,0) + 1 WHERE id=$1 RETURNING failed_attempts`,
+    [userId]
+  );
+  const attempts = r.rows[0]?.failed_attempts || 0;
+  if (attempts >= MAX_FAILED_ATTEMPTS) {
+    const lockedUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000);
+    await pool.query(`UPDATE users SET locked_until=$1 WHERE id=$2`, [lockedUntil, userId]);
+  }
+}
+
+// Reset hitungan gagal setelah login berhasil
+async function resetFailedAttempts(userId) {
+  await pool.query(`UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=$1`, [userId]);
+}
+
 // Auto update status kadaluarsa
 async function syncExpiredStatus() {
   await pool.query(`UPDATE anggota SET status='kadaluarsa' WHERE masa_aktif_sampai < CURRENT_DATE AND status='aktif'`).catch(()=>{});
@@ -547,8 +583,16 @@ app.post('/api/auth/login-admin', async (req, res) => {
     );
     if (!r.rows.length) return res.status(401).json({ error: 'Username atau password salah' });
     const u = r.rows[0];
-    if (!await bcrypt.compare(password, u.password_hash)) return res.status(401).json({ error: 'Username atau password salah' });
+
+    const lockMsg = await checkLockout(u);
+    if (lockMsg) return res.status(429).json({ error: lockMsg });
+
+    if (!await bcrypt.compare(password, u.password_hash)) {
+      await recordFailedAttempt(u.id);
+      return res.status(401).json({ error: 'Username atau password salah' });
+    }
     if (!u.is_active) return res.status(403).json({ error: 'Akun dinonaktifkan' });
+    await resetFailedAttempts(u.id);
     // Generate session baru → invalidate sesi lama di perangkat lain
     const sessionToken = generateSessionToken();
     await pool.query('UPDATE users SET session_token=$1 WHERE id=$2', [sessionToken, u.id]);
@@ -563,7 +607,15 @@ app.post('/api/auth/login-superadmin', async (req, res) => {
     const r = await pool.query("SELECT * FROM users WHERE username=$1 AND role='superadmin'", [username]);
     if (!r.rows.length) return res.status(401).json({ error: 'Username atau password salah' });
     const u = r.rows[0];
-    if (!await bcrypt.compare(password, u.password_hash)) return res.status(401).json({ error: 'Username atau password salah' });
+
+    const lockMsg = await checkLockout(u);
+    if (lockMsg) return res.status(429).json({ error: lockMsg });
+
+    if (!await bcrypt.compare(password, u.password_hash)) {
+      await recordFailedAttempt(u.id);
+      return res.status(401).json({ error: 'Username atau password salah' });
+    }
+    await resetFailedAttempts(u.id);
     // Generate session baru → invalidate sesi lama di perangkat lain
     const sessionToken = generateSessionToken();
     await pool.query('UPDATE users SET session_token=$1 WHERE id=$2', [sessionToken, u.id]);
@@ -1391,8 +1443,33 @@ app.get('/api/setup', async (req, res) => {
       kolom_anggota_sekarang: cols.rows.map(r => `${r.column_name}${r.is_nullable === 'NO' ? ' [WAJIB]' : ''}`)
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('SETUP ERROR:', err);
+    res.status(500).json({
+      error: err.message || err.toString() || 'Error tidak diketahui, cek log server',
+      error_name: err.name || null,
+      error_code: err.code || null,
+      error_detail: err.detail || null
+    });
   }
+});
+
+// Cek cepat: apakah DATABASE_URL terbaca & bisa connect ke database sama sekali
+app.get('/api/health-check', async (req, res) => {
+  const hasDbUrl = !!process.env.DATABASE_URL;
+  const hasJwtSecret = !!process.env.JWT_SECRET;
+  let dbConnect = 'belum dicoba';
+  try {
+    const r = await pool.query('SELECT NOW() as waktu_server');
+    dbConnect = `✅ Berhasil, waktu server database: ${r.rows[0].waktu_server}`;
+  } catch (err) {
+    dbConnect = `❌ Gagal: ${err.message || err.toString()}`;
+  }
+  res.json({
+    DATABASE_URL_terisi: hasDbUrl,
+    JWT_SECRET_terisi: hasJwtSecret,
+    koneksi_database: dbConnect,
+    node_version: process.version
+  });
 });
 
 // Cek struktur tabel apa adanya (diagnostik, tanpa mengubah apapun)
